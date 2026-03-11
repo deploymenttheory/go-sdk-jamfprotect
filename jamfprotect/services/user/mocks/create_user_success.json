@@ -1,0 +1,1 @@
+{"data":{"createUser":{"id":"user-id-1234","email":"test@example.com","sub":null,"connection":null,"assignedRoles":[],"assignedGroups":[],"lastLogin":null,"source":"local","receiveEmailAlert":false,"emailAlertMinSeverity":"LOW","extraAttrs":"","created":"2024-01-01T00:00:00.000Z","updated":"2024-01-01T00:00:00.000Z"}}}

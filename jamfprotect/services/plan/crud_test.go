@@ -2,49 +2,23 @@ package plan_test
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/plan"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/plan/mocks"
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testBaseURL = "https://test.jamfprotect.example.com"
-
-func setupMockClient(t *testing.T) (*plan.Service, string) {
+func setupMockService(t *testing.T) (*plan.Service, *mocks.PlanMock) {
 	t.Helper()
-
-	httpClient := &http.Client{}
-	httpmock.ActivateNonDefault(httpClient)
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
-
-	httpmock.RegisterResponder("POST", testBaseURL+"/token",
-		httpmock.NewJsonResponderOrPanic(200, map[string]any{
-			"access_token": "mock-token",
-			"expires_in":   3600,
-			"token_type":   "Bearer",
-		}),
-	)
-
-	transport, err := client.NewTransport("test-client", "test-secret",
-		client.WithBaseURL(testBaseURL),
-		client.WithTransport(httpClient.Transport),
-	)
-	require.NoError(t, err)
-
-	return plan.NewService(transport), testBaseURL
+	mock := mocks.NewPlanMock()
+	return plan.NewService(mock), mock
 }
 
 func TestPlanService_CreatePlan(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPlanMock(baseURL)
-	mockHandler.RegisterCreatePlanMock()
+	service, mock := setupMockService(t)
+	mock.RegisterCreatePlanMock()
 
 	req := &plan.CreatePlanRequest{
 		Name:          "Test Plan",
@@ -64,9 +38,8 @@ func TestPlanService_CreatePlan(t *testing.T) {
 }
 
 func TestPlanService_GetPlan(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPlanMock(baseURL)
-	mockHandler.RegisterGetPlanMock()
+	service, mock := setupMockService(t)
+	mock.RegisterGetPlanMock()
 
 	result, _, err := service.GetPlan(context.Background(), "test-id-1234")
 
@@ -77,9 +50,8 @@ func TestPlanService_GetPlan(t *testing.T) {
 }
 
 func TestPlanService_UpdatePlan(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPlanMock(baseURL)
-	mockHandler.RegisterUpdatePlanMock()
+	service, mock := setupMockService(t)
+	mock.RegisterUpdatePlanMock()
 
 	req := &plan.UpdatePlanRequest{
 		Name:          "Updated Plan",
@@ -99,9 +71,8 @@ func TestPlanService_UpdatePlan(t *testing.T) {
 }
 
 func TestPlanService_DeletePlan(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPlanMock(baseURL)
-	mockHandler.RegisterDeletePlanMock()
+	service, mock := setupMockService(t)
+	mock.RegisterDeletePlanMock()
 
 	_, err := service.DeletePlan(context.Background(), "test-id-1234")
 
@@ -109,9 +80,8 @@ func TestPlanService_DeletePlan(t *testing.T) {
 }
 
 func TestPlanService_ListPlans(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPlanMock(baseURL)
-	mockHandler.RegisterListPlansMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListPlansMock()
 
 	result, _, err := service.ListPlans(context.Background())
 
@@ -122,9 +92,8 @@ func TestPlanService_ListPlans(t *testing.T) {
 }
 
 func TestPlanService_ListPlanNames(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPlanMock(baseURL)
-	mockHandler.RegisterListPlanNamesMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListPlanNamesMock()
 
 	result, _, err := service.ListPlanNames(context.Background())
 
@@ -134,16 +103,15 @@ func TestPlanService_ListPlanNames(t *testing.T) {
 }
 
 func TestPlanService_GetPlanConfigurationAndSetOptions(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPlanMock(baseURL)
-	mockHandler.RegisterGetPlanConfigurationAndSetOptionsMock()
+	service, mock := setupMockService(t)
+	mock.RegisterGetPlanConfigurationAndSetOptionsMock()
 
 	req := &plan.GetPlanConfigurationAndSetOptionsRequest{
 		RBACActionConfigs: true,
 		RBACTelemetry:     true,
 		RBACUSBControlSet: true,
-		RBACExceptionSet:   true,
-		RBACAnalyticSet:    true,
+		RBACExceptionSet:  true,
+		RBACAnalyticSet:   true,
 	}
 
 	result, _, err := service.GetPlanConfigurationAndSetOptions(context.Background(), req)
@@ -160,7 +128,7 @@ func TestPlanService_GetPlanConfigurationAndSetOptions(t *testing.T) {
 }
 
 func TestPlanService_ValidationErrors(t *testing.T) {
-	service, _ := setupMockClient(t)
+	service, _ := setupMockService(t)
 
 	tests := []struct {
 		name    string

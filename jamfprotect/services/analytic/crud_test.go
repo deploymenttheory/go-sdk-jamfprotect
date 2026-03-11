@@ -2,51 +2,25 @@ package analytic_test
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic/mocks"
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testBaseURL = "https://test.jamfprotect.example.com"
-
 const testUUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
 
-func setupMockClient(t *testing.T) (*analytic.Service, string) {
+func setupMockService(t *testing.T) (*analytic.Service, *mocks.AnalyticMock) {
 	t.Helper()
-
-	httpClient := &http.Client{}
-	httpmock.ActivateNonDefault(httpClient)
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
-
-	httpmock.RegisterResponder("POST", testBaseURL+"/token",
-		httpmock.NewJsonResponderOrPanic(200, map[string]any{
-			"access_token": "mock-token",
-			"expires_in":   3600,
-			"token_type":   "Bearer",
-		}),
-	)
-
-	transport, err := client.NewTransport("test-client", "test-secret",
-		client.WithBaseURL(testBaseURL),
-		client.WithTransport(httpClient.Transport),
-	)
-	require.NoError(t, err)
-
-	return analytic.NewService(transport), testBaseURL
+	mock := mocks.NewAnalyticMock()
+	return analytic.NewService(mock), mock
 }
 
 func TestAnalyticService_CreateAnalytic(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterCreateAnalyticMock()
+	service, mock := setupMockService(t)
+	mock.RegisterCreateAnalyticMock()
 
 	req := &analytic.CreateAnalyticRequest{
 		Name:        "Test Analytic",
@@ -66,9 +40,8 @@ func TestAnalyticService_CreateAnalytic(t *testing.T) {
 }
 
 func TestAnalyticService_GetAnalytic(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterGetAnalyticMock()
+	service, mock := setupMockService(t)
+	mock.RegisterGetAnalyticMock()
 
 	result, _, err := service.GetAnalytic(context.Background(), testUUID)
 
@@ -79,9 +52,8 @@ func TestAnalyticService_GetAnalytic(t *testing.T) {
 }
 
 func TestAnalyticService_UpdateAnalytic(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterUpdateAnalyticMock()
+	service, mock := setupMockService(t)
+	mock.RegisterUpdateAnalyticMock()
 
 	req := &analytic.UpdateAnalyticRequest{
 		Name:        "Updated Analytic",
@@ -100,9 +72,8 @@ func TestAnalyticService_UpdateAnalytic(t *testing.T) {
 }
 
 func TestAnalyticService_DeleteAnalytic(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterDeleteAnalyticMock()
+	service, mock := setupMockService(t)
+	mock.RegisterDeleteAnalyticMock()
 
 	_, err := service.DeleteAnalytic(context.Background(), testUUID)
 
@@ -110,9 +81,8 @@ func TestAnalyticService_DeleteAnalytic(t *testing.T) {
 }
 
 func TestAnalyticService_ListAnalytics(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterListAnalyticsMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListAnalyticsMock()
 
 	result, _, err := service.ListAnalytics(context.Background())
 
@@ -123,9 +93,8 @@ func TestAnalyticService_ListAnalytics(t *testing.T) {
 }
 
 func TestAnalyticService_ListAnalyticsLite(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterListAnalyticsLiteMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListAnalyticsLiteMock()
 
 	result, _, err := service.ListAnalyticsLite(context.Background())
 
@@ -136,9 +105,8 @@ func TestAnalyticService_ListAnalyticsLite(t *testing.T) {
 }
 
 func TestAnalyticService_ListAnalyticsNames(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterListAnalyticsNamesMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListAnalyticsNamesMock()
 
 	result, _, err := service.ListAnalyticsNames(context.Background())
 
@@ -148,9 +116,8 @@ func TestAnalyticService_ListAnalyticsNames(t *testing.T) {
 }
 
 func TestAnalyticService_ListAnalyticsCategories(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterListAnalyticsCategoriesMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListAnalyticsCategoriesMock()
 
 	result, _, err := service.ListAnalyticsCategories(context.Background())
 
@@ -161,9 +128,8 @@ func TestAnalyticService_ListAnalyticsCategories(t *testing.T) {
 }
 
 func TestAnalyticService_ListAnalyticsTags(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterListAnalyticsTagsMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListAnalyticsTagsMock()
 
 	result, _, err := service.ListAnalyticsTags(context.Background())
 
@@ -174,9 +140,8 @@ func TestAnalyticService_ListAnalyticsTags(t *testing.T) {
 }
 
 func TestAnalyticService_ListAnalyticsFilterOptions(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticMock(baseURL)
-	mockHandler.RegisterListAnalyticsFilterOptionsMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListAnalyticsFilterOptionsMock()
 
 	result, _, err := service.ListAnalyticsFilterOptions(context.Background())
 
@@ -189,7 +154,7 @@ func TestAnalyticService_ListAnalyticsFilterOptions(t *testing.T) {
 }
 
 func TestAnalyticService_ValidationErrors(t *testing.T) {
-	service, _ := setupMockClient(t)
+	service, _ := setupMockService(t)
 
 	tests := []struct {
 		name    string

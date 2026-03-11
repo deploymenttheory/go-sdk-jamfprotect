@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/interfaces"
+	"resty.dev/v3"
 )
 
 // GraphQLRequest represents a GraphQL request payload.
@@ -15,10 +15,20 @@ type GraphQLRequest struct {
 	Variables map[string]any `json:"variables,omitempty"`
 }
 
-// GraphQLPost sends a GraphQL query or mutation via HTTP POST.
-// Path is supplied by the caller (e.g. service CRUD). Headers are applied if provided (nil allowed).
-// Returns the HTTP response and any error; response is non-nil on error.
-func (t *Transport) GraphQLPost(ctx context.Context, path string, query string, variables map[string]any, target any, headers map[string]string) (*interfaces.Response, error) {
+// NewRequest returns a GraphQLRequestBuilder for this transport.
+// The service layer uses it to construct the full request — query, variables,
+// target, headers — before calling Post to execute it.
+// Auth, retry, and concurrency limiting are applied by the transport.
+func (t *Transport) NewRequest(ctx context.Context) *GraphQLRequestBuilder {
+	return &GraphQLRequestBuilder{
+		ctx:      ctx,
+		headers:  make(map[string]string),
+		executor: t,
+	}
+}
+
+// executeGraphQL implements graphQLExecutor for Transport.
+func (t *Transport) executeGraphQL(ctx context.Context, path, query string, variables map[string]any, target any, headers map[string]string) (*resty.Response, error) {
 	if path == "" {
 		return nil, fmt.Errorf("%w: path is required", ErrInvalidInput)
 	}

@@ -2,49 +2,23 @@ package removablestoragecontrolset_test
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
 	removablestoragecontrolset "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/removable_storage_control_set"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/removable_storage_control_set/mocks"
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testBaseURL = "https://test.jamfprotect.example.com"
-
-func setupMockClient(t *testing.T) (*removablestoragecontrolset.Service, string) {
+func setupMockService(t *testing.T) (*removablestoragecontrolset.Service, *mocks.USBControlSetMock) {
 	t.Helper()
-
-	httpClient := &http.Client{}
-	httpmock.ActivateNonDefault(httpClient)
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
-
-	httpmock.RegisterResponder("POST", testBaseURL+"/token",
-		httpmock.NewJsonResponderOrPanic(200, map[string]any{
-			"access_token": "mock-token",
-			"expires_in":   3600,
-			"token_type":   "Bearer",
-		}),
-	)
-
-	transport, err := client.NewTransport("test-client", "test-secret",
-		client.WithBaseURL(testBaseURL),
-		client.WithTransport(httpClient.Transport),
-	)
-	require.NoError(t, err)
-
-	return removablestoragecontrolset.NewService(transport), testBaseURL
+	mock := mocks.NewUSBControlSetMock()
+	return removablestoragecontrolset.NewService(mock), mock
 }
 
 func TestUSBControlSetService_CreateUSBControlSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUSBControlSetMock(baseURL)
-	mockHandler.RegisterCreateUSBControlSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterCreateUSBControlSetMock()
 
 	req := &removablestoragecontrolset.CreateUSBControlSetRequest{
 		Name:                 "Test USB Control Set",
@@ -63,9 +37,8 @@ func TestUSBControlSetService_CreateUSBControlSet(t *testing.T) {
 }
 
 func TestUSBControlSetService_GetUSBControlSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUSBControlSetMock(baseURL)
-	mockHandler.RegisterGetUSBControlSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterGetUSBControlSetMock()
 
 	result, _, err := service.GetUSBControlSet(context.Background(), "test-id-1234")
 
@@ -76,9 +49,8 @@ func TestUSBControlSetService_GetUSBControlSet(t *testing.T) {
 }
 
 func TestUSBControlSetService_UpdateUSBControlSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUSBControlSetMock(baseURL)
-	mockHandler.RegisterUpdateUSBControlSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterUpdateUSBControlSetMock()
 
 	req := &removablestoragecontrolset.UpdateUSBControlSetRequest{
 		Name:                 "Updated USB Control Set",
@@ -97,9 +69,8 @@ func TestUSBControlSetService_UpdateUSBControlSet(t *testing.T) {
 }
 
 func TestUSBControlSetService_DeleteUSBControlSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUSBControlSetMock(baseURL)
-	mockHandler.RegisterDeleteUSBControlSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterDeleteUSBControlSetMock()
 
 	_, err := service.DeleteUSBControlSet(context.Background(), "test-id-1234")
 
@@ -107,9 +78,8 @@ func TestUSBControlSetService_DeleteUSBControlSet(t *testing.T) {
 }
 
 func TestUSBControlSetService_ListUSBControlSets(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUSBControlSetMock(baseURL)
-	mockHandler.RegisterListUSBControlSetsMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListUSBControlSetsMock()
 
 	result, _, err := service.ListUSBControlSets(context.Background())
 
@@ -119,9 +89,8 @@ func TestUSBControlSetService_ListUSBControlSets(t *testing.T) {
 }
 
 func TestUSBControlSetService_ListUSBControlSetNames(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUSBControlSetMock(baseURL)
-	mockHandler.RegisterListUSBControlSetNamesMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListUSBControlSetNamesMock()
 
 	result, _, err := service.ListUSBControlSetNames(context.Background())
 
@@ -131,7 +100,7 @@ func TestUSBControlSetService_ListUSBControlSetNames(t *testing.T) {
 }
 
 func TestUSBControlSetService_ValidationErrors(t *testing.T) {
-	service, _ := setupMockClient(t)
+	service, _ := setupMockService(t)
 
 	tests := []struct {
 		name    string

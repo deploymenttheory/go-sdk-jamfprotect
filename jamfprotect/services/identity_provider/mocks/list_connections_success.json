@@ -1,0 +1,1 @@
+{"data":{"listConnections":{"items":[{"id":"conn-id-1234","name":"Test Connection","requireKnownUsers":false,"button":"Login","created":"2024-01-01T00:00:00.000Z","updated":"2024-01-01T00:00:00.000Z","strategy":"samlp","groupsSupport":true,"source":"saml"}],"pageInfo":{"next":null,"total":1}}}}

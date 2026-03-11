@@ -1,0 +1,1 @@
+{"data":{"deleteRole":{"id":"role-id-1234","name":"Test Role","permissions":{"R":["ANALYTIC"],"W":[]},"created":"2024-01-01T00:00:00.000Z","updated":"2024-01-01T00:00:00.000Z"}}}

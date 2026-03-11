@@ -1,0 +1,1 @@
+{"data":{"createApiClient":{"clientId":"test-client-id-1234","name":"Test API Client","assignedRoles":[{"id":"role-id-1","name":"Test Role"}],"password":"test-password-secret","created":"2024-01-01T00:00:00.000Z"}}}

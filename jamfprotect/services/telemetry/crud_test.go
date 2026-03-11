@@ -2,54 +2,28 @@ package telemetry_test
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/telemetry"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/telemetry/mocks"
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testBaseURL = "https://test.jamfprotect.example.com"
-
-func setupMockClient(t *testing.T) (*telemetry.Service, string) {
+func setupMockService(t *testing.T) (*telemetry.Service, *mocks.TelemetryMock) {
 	t.Helper()
-
-	httpClient := &http.Client{}
-	httpmock.ActivateNonDefault(httpClient)
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
-
-	httpmock.RegisterResponder("POST", testBaseURL+"/token",
-		httpmock.NewJsonResponderOrPanic(200, map[string]any{
-			"access_token": "mock-token",
-			"expires_in":   3600,
-			"token_type":   "Bearer",
-		}),
-	)
-
-	transport, err := client.NewTransport("test-client", "test-secret",
-		client.WithBaseURL(testBaseURL),
-		client.WithTransport(httpClient.Transport),
-	)
-	require.NoError(t, err)
-
-	return telemetry.NewService(transport), testBaseURL
+	mock := mocks.NewTelemetryMock()
+	return telemetry.NewService(mock), mock
 }
 
 func TestTelemetryService_CreateTelemetryV2(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewTelemetryMock(baseURL)
-	mockHandler.RegisterCreateTelemetryV2Mock()
+	service, mock := setupMockService(t)
+	mock.RegisterCreateTelemetryV2Mock()
 
 	req := &telemetry.CreateTelemetryV2Request{
-		Name:     "Test Telemetry V2",
+		Name:        "Test Telemetry V2",
 		Description: "A test telemetry v2",
-		LogFiles: []string{},
+		LogFiles:    []string{},
 	}
 
 	result, _, err := service.CreateTelemetryV2(context.Background(), req)
@@ -61,9 +35,8 @@ func TestTelemetryService_CreateTelemetryV2(t *testing.T) {
 }
 
 func TestTelemetryService_GetTelemetryV2(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewTelemetryMock(baseURL)
-	mockHandler.RegisterGetTelemetryV2Mock()
+	service, mock := setupMockService(t)
+	mock.RegisterGetTelemetryV2Mock()
 
 	result, _, err := service.GetTelemetryV2(context.Background(), "test-id-1234")
 
@@ -74,14 +47,13 @@ func TestTelemetryService_GetTelemetryV2(t *testing.T) {
 }
 
 func TestTelemetryService_UpdateTelemetryV2(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewTelemetryMock(baseURL)
-	mockHandler.RegisterUpdateTelemetryV2Mock()
+	service, mock := setupMockService(t)
+	mock.RegisterUpdateTelemetryV2Mock()
 
 	req := &telemetry.UpdateTelemetryV2Request{
-		Name:     "Updated Telemetry V2",
+		Name:        "Updated Telemetry V2",
 		Description: "An updated telemetry v2",
-		LogFiles: []string{},
+		LogFiles:    []string{},
 	}
 
 	result, _, err := service.UpdateTelemetryV2(context.Background(), "test-id-1234", req)
@@ -93,9 +65,8 @@ func TestTelemetryService_UpdateTelemetryV2(t *testing.T) {
 }
 
 func TestTelemetryService_DeleteTelemetryV2(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewTelemetryMock(baseURL)
-	mockHandler.RegisterDeleteTelemetryV2Mock()
+	service, mock := setupMockService(t)
+	mock.RegisterDeleteTelemetryV2Mock()
 
 	_, err := service.DeleteTelemetryV2(context.Background(), "test-id-1234")
 
@@ -103,9 +74,8 @@ func TestTelemetryService_DeleteTelemetryV2(t *testing.T) {
 }
 
 func TestTelemetryService_ListTelemetriesV2(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewTelemetryMock(baseURL)
-	mockHandler.RegisterListTelemetriesV2Mock()
+	service, mock := setupMockService(t)
+	mock.RegisterListTelemetriesV2Mock()
 
 	result, _, err := service.ListTelemetriesV2(context.Background())
 
@@ -116,9 +86,8 @@ func TestTelemetryService_ListTelemetriesV2(t *testing.T) {
 }
 
 func TestTelemetryService_ListTelemetriesCombined(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewTelemetryMock(baseURL)
-	mockHandler.RegisterListTelemetriesCombinedMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListTelemetriesCombinedMock()
 
 	result, _, err := service.ListTelemetriesCombined(context.Background(), false)
 
@@ -133,7 +102,7 @@ func TestTelemetryService_ListTelemetriesCombined(t *testing.T) {
 }
 
 func TestTelemetryService_ValidationErrors(t *testing.T) {
-	service, _ := setupMockClient(t)
+	service, _ := setupMockService(t)
 
 	tests := []struct {
 		name    string

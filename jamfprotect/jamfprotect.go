@@ -17,6 +17,11 @@ import (
 	telemetryv2 "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/telemetry"
 	usbcontrolsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/removable_storage_control_set"
 	unifiedloggingfilters "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/unified_logging_filter"
+	downloads "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/downloads"
+	groups "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/group"
+	identityproviders "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/identity_provider"
+	roles "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/role"
+	users "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/user"
 )
 
 // Client is the main entry point for the Jamf Protect API SDK.
@@ -36,6 +41,11 @@ type Client struct {
 	TelemetryV2           *telemetryv2.Service
 	USBControlSet         *usbcontrolsets.Service
 	UnifiedLoggingFilter  *unifiedloggingfilters.Service
+	Downloads             *downloads.Service
+	Group                 *groups.Service
+	IdentityProvider      *identityproviders.Service
+	Role                  *roles.Service
+	User                  *users.Service
 }
 
 // NewClient creates a new Jamf Protect API client
@@ -70,6 +80,11 @@ func NewClient(clientID, clientSecret string, options ...client.ClientOption) (*
 		TelemetryV2:          telemetryv2.NewService(transport),
 		USBControlSet:        usbcontrolsets.NewService(transport),
 		UnifiedLoggingFilter: unifiedloggingfilters.NewService(transport),
+		Downloads:            downloads.NewService(transport),
+		Group:                groups.NewService(transport),
+		IdentityProvider:     identityproviders.NewService(transport),
+		Role:                 roles.NewService(transport),
+		User:                 users.NewService(transport),
 	}
 
 	return c, nil

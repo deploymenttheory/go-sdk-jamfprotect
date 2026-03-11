@@ -5,21 +5,21 @@ import (
 	"fmt"
 
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/interfaces"
+	"resty.dev/v3"
 )
 
 // Service provides operations for Jamf Protect Prevent Lists
 type Service struct {
-	client interfaces.GraphQLClient
+	client client.GraphQLClient
 }
 
 // NewService creates a new Prevent Lists service
-func NewService(client interfaces.GraphQLClient) *Service {
-	return &Service{client: client}
+func NewService(c client.GraphQLClient) *Service {
+	return &Service{client: c}
 }
 
 // CreatePreventList creates a new prevent list
-func (s *Service) CreatePreventList(ctx context.Context, req *CreatePreventListRequest) (*PreventList, *interfaces.Response, error) {
+func (s *Service) CreatePreventList(ctx context.Context, req *CreatePreventListRequest) (*PreventList, *resty.Response, error) {
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
 	}
@@ -33,17 +33,16 @@ func (s *Service) CreatePreventList(ctx context.Context, req *CreatePreventListR
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := preventListMutationVariables(req)
 	var result struct {
 		CreatePreventList *PreventList `json:"createPreventList"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, createPreventListMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(createPreventListMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to create prevent list: %w", err)
 	}
@@ -52,14 +51,9 @@ func (s *Service) CreatePreventList(ctx context.Context, req *CreatePreventListR
 }
 
 // GetPreventList retrieves a prevent list by ID
-func (s *Service) GetPreventList(ctx context.Context, id string) (*PreventList, *interfaces.Response, error) {
+func (s *Service) GetPreventList(ctx context.Context, id string) (*PreventList, *resty.Response, error) {
 	if id == "" {
 		return nil, nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
-	}
-
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
 	}
 
 	vars := map[string]any{"id": id}
@@ -67,7 +61,11 @@ func (s *Service) GetPreventList(ctx context.Context, id string) (*PreventList, 
 		GetPreventList *PreventList `json:"getPreventList"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, getPreventListQuery, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(getPreventListQuery).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get prevent list: %w", err)
 	}
@@ -76,7 +74,7 @@ func (s *Service) GetPreventList(ctx context.Context, id string) (*PreventList, 
 }
 
 // UpdatePreventList updates an existing prevent list
-func (s *Service) UpdatePreventList(ctx context.Context, id string, req *UpdatePreventListRequest) (*PreventList, *interfaces.Response, error) {
+func (s *Service) UpdatePreventList(ctx context.Context, id string, req *UpdatePreventListRequest) (*PreventList, *resty.Response, error) {
 	if id == "" {
 		return nil, nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
 	}
@@ -93,18 +91,17 @@ func (s *Service) UpdatePreventList(ctx context.Context, id string, req *UpdateP
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := preventListMutationVariables(req)
 	vars["id"] = id
 	var result struct {
 		UpdatePreventList *PreventList `json:"updatePreventList"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, updatePreventListMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(updatePreventListMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to update prevent list: %w", err)
 	}
@@ -113,19 +110,17 @@ func (s *Service) UpdatePreventList(ctx context.Context, id string, req *UpdateP
 }
 
 // DeletePreventList deletes a prevent list by ID
-func (s *Service) DeletePreventList(ctx context.Context, id string) (*interfaces.Response, error) {
+func (s *Service) DeletePreventList(ctx context.Context, id string) (*resty.Response, error) {
 	if id == "" {
 		return nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := map[string]any{"id": id}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, deletePreventListMutation, vars, nil, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(deletePreventListMutation).
+		SetVariables(vars).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return resp, fmt.Errorf("failed to delete prevent list: %w", err)
 	}
@@ -134,15 +129,10 @@ func (s *Service) DeletePreventList(ctx context.Context, id string) (*interfaces
 }
 
 // ListPreventLists retrieves all prevent lists with automatic pagination
-func (s *Service) ListPreventLists(ctx context.Context) ([]PreventList, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListPreventLists(ctx context.Context) ([]PreventList, *resty.Response, error) {
 	allItems := make([]PreventList, 0)
 	var nextToken *string
-	var lastResp *interfaces.Response
+	var lastResp *resty.Response
 
 	for {
 		vars := map[string]any{
@@ -157,7 +147,11 @@ func (s *Service) ListPreventLists(ctx context.Context) ([]PreventList, *interfa
 			ListPreventLists *ListPreventListsResponse `json:"listPreventLists"`
 		}
 
-		resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listPreventListsQuery, vars, &result, headers)
+		resp, err := s.client.NewRequest(ctx).
+			SetQuery(listPreventListsQuery).
+			SetVariables(vars).
+			SetTarget(&result).
+			Post(client.EndpointGraphQL)
 		lastResp = resp
 		if err != nil {
 			return nil, lastResp, fmt.Errorf("failed to list prevent lists: %w", err)
@@ -202,29 +196,25 @@ func preventListMutationVariables(req any) map[string]any {
 		list = r.List
 	}
 
-	vars := map[string]any{
+	return map[string]any{
 		"name":        name,
 		"description": description,
 		"type":        typ,
 		"tags":        tags,
 		"list":        list,
 	}
-
-	return vars
 }
 
 // ListPreventListNames retrieves only the names of all custom prevent lists
-func (s *Service) ListPreventListNames(ctx context.Context) ([]string, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListPreventListNames(ctx context.Context) ([]string, *resty.Response, error) {
 	var result struct {
 		ListPreventListNames *ListPreventListNamesResponse `json:"listPreventListNames"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listPreventListNamesQuery, nil, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(listPreventListNamesQuery).
+		SetTarget(&result).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list prevent list names: %w", err)
 	}

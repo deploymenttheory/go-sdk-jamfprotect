@@ -5,21 +5,21 @@ import (
 	"fmt"
 
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/interfaces"
+	"resty.dev/v3"
 )
 
 // Service provides operations for Jamf Protect Unified Logging Filters
 type Service struct {
-	client interfaces.GraphQLClient
+	client client.GraphQLClient
 }
 
 // NewService creates a new Unified Logging Filters service
-func NewService(client interfaces.GraphQLClient) *Service {
-	return &Service{client: client}
+func NewService(c client.GraphQLClient) *Service {
+	return &Service{client: c}
 }
 
 // CreateUnifiedLoggingFilter creates a new unified logging filter
-func (s *Service) CreateUnifiedLoggingFilter(ctx context.Context, req *CreateUnifiedLoggingFilterRequest) (*UnifiedLoggingFilter, *interfaces.Response, error) {
+func (s *Service) CreateUnifiedLoggingFilter(ctx context.Context, req *CreateUnifiedLoggingFilterRequest) (*UnifiedLoggingFilter, *resty.Response, error) {
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
 	}
@@ -30,17 +30,16 @@ func (s *Service) CreateUnifiedLoggingFilter(ctx context.Context, req *CreateUni
 		return nil, nil, fmt.Errorf("%w: filter is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := unifiedLoggingFilterMutationVariables(req)
 	var result struct {
 		CreateUnifiedLoggingFilter *UnifiedLoggingFilter `json:"createUnifiedLoggingFilter"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, createUnifiedLoggingFilterMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(createUnifiedLoggingFilterMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to create unified logging filter: %w", err)
 	}
@@ -49,14 +48,9 @@ func (s *Service) CreateUnifiedLoggingFilter(ctx context.Context, req *CreateUni
 }
 
 // GetUnifiedLoggingFilter retrieves a unified logging filter by UUID
-func (s *Service) GetUnifiedLoggingFilter(ctx context.Context, uuid string) (*UnifiedLoggingFilter, *interfaces.Response, error) {
+func (s *Service) GetUnifiedLoggingFilter(ctx context.Context, uuid string) (*UnifiedLoggingFilter, *resty.Response, error) {
 	if err := ValidateUnifiedLoggingFilterUUID(uuid); err != nil {
 		return nil, nil, err
-	}
-
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
 	}
 
 	vars := map[string]any{"uuid": uuid}
@@ -64,7 +58,11 @@ func (s *Service) GetUnifiedLoggingFilter(ctx context.Context, uuid string) (*Un
 		GetUnifiedLoggingFilter *UnifiedLoggingFilter `json:"getUnifiedLoggingFilter"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, getUnifiedLoggingFilterQuery, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(getUnifiedLoggingFilterQuery).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get unified logging filter: %w", err)
 	}
@@ -73,7 +71,7 @@ func (s *Service) GetUnifiedLoggingFilter(ctx context.Context, uuid string) (*Un
 }
 
 // UpdateUnifiedLoggingFilter updates an existing unified logging filter
-func (s *Service) UpdateUnifiedLoggingFilter(ctx context.Context, uuid string, req *UpdateUnifiedLoggingFilterRequest) (*UnifiedLoggingFilter, *interfaces.Response, error) {
+func (s *Service) UpdateUnifiedLoggingFilter(ctx context.Context, uuid string, req *UpdateUnifiedLoggingFilterRequest) (*UnifiedLoggingFilter, *resty.Response, error) {
 	if err := ValidateUnifiedLoggingFilterUUID(uuid); err != nil {
 		return nil, nil, err
 	}
@@ -87,18 +85,17 @@ func (s *Service) UpdateUnifiedLoggingFilter(ctx context.Context, uuid string, r
 		return nil, nil, fmt.Errorf("%w: filter is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := unifiedLoggingFilterMutationVariables(req)
 	vars["uuid"] = uuid
 	var result struct {
 		UpdateUnifiedLoggingFilter *UnifiedLoggingFilter `json:"updateUnifiedLoggingFilter"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, updateUnifiedLoggingFilterMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(updateUnifiedLoggingFilterMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to update unified logging filter: %w", err)
 	}
@@ -107,19 +104,17 @@ func (s *Service) UpdateUnifiedLoggingFilter(ctx context.Context, uuid string, r
 }
 
 // DeleteUnifiedLoggingFilter deletes a unified logging filter by UUID
-func (s *Service) DeleteUnifiedLoggingFilter(ctx context.Context, uuid string) (*interfaces.Response, error) {
+func (s *Service) DeleteUnifiedLoggingFilter(ctx context.Context, uuid string) (*resty.Response, error) {
 	if err := ValidateUnifiedLoggingFilterUUID(uuid); err != nil {
 		return nil, err
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := map[string]any{"uuid": uuid}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, deleteUnifiedLoggingFilterMutation, vars, nil, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(deleteUnifiedLoggingFilterMutation).
+		SetVariables(vars).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return resp, fmt.Errorf("failed to delete unified logging filter: %w", err)
 	}
@@ -128,15 +123,10 @@ func (s *Service) DeleteUnifiedLoggingFilter(ctx context.Context, uuid string) (
 }
 
 // ListUnifiedLoggingFilters retrieves all unified logging filters with automatic pagination
-func (s *Service) ListUnifiedLoggingFilters(ctx context.Context) ([]UnifiedLoggingFilter, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListUnifiedLoggingFilters(ctx context.Context) ([]UnifiedLoggingFilter, *resty.Response, error) {
 	allItems := make([]UnifiedLoggingFilter, 0)
 	var nextToken *string
-	var lastResp *interfaces.Response
+	var lastResp *resty.Response
 
 	for {
 		vars := map[string]any{
@@ -152,7 +142,11 @@ func (s *Service) ListUnifiedLoggingFilters(ctx context.Context) ([]UnifiedLoggi
 			ListUnifiedLoggingFilters *ListUnifiedLoggingFiltersResponse `json:"listUnifiedLoggingFilters"`
 		}
 
-		resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listUnifiedLoggingFiltersQuery, vars, &result, headers)
+		resp, err := s.client.NewRequest(ctx).
+			SetQuery(listUnifiedLoggingFiltersQuery).
+			SetVariables(vars).
+			SetTarget(&result).
+			Post(client.EndpointGraphQL)
 		lastResp = resp
 		if err != nil {
 			return nil, lastResp, fmt.Errorf("failed to list unified logging filters: %w", err)
@@ -173,17 +167,15 @@ func (s *Service) ListUnifiedLoggingFilters(ctx context.Context) ([]UnifiedLoggi
 }
 
 // ListUnifiedLoggingFilterNames retrieves only the names of all unified logging filters
-func (s *Service) ListUnifiedLoggingFilterNames(ctx context.Context) ([]string, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListUnifiedLoggingFilterNames(ctx context.Context) ([]string, *resty.Response, error) {
 	var result struct {
 		ListUnifiedLoggingFilterNames *ListUnifiedLoggingFilterNamesResponse `json:"listUnifiedLoggingFilterNames"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listUnifiedLoggingFilterNamesQuery, nil, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(listUnifiedLoggingFilterNamesQuery).
+		SetTarget(&result).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list unified logging filter names: %w", err)
 	}

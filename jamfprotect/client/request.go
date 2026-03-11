@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/interfaces"
 	"go.uber.org/zap"
 	"resty.dev/v3"
 )
 
 // Post executes a POST request with JSON body. Auth is applied automatically via middleware.
-func (t *Transport) Post(ctx context.Context, path string, body any, headers map[string]string, result any) (*interfaces.Response, error) {
+func (t *Transport) Post(ctx context.Context, path string, body any, headers map[string]string, result any) (*resty.Response, error) {
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
@@ -30,8 +30,32 @@ func (t *Transport) Post(ctx context.Context, path string, body any, headers map
 }
 
 // executeRequest is a centralized request executor that handles error processing.
-// Returns response metadata and error. Response is always non-nil for accessing headers.
-func (t *Transport) executeRequest(req *resty.Request, method, path string) (*interfaces.Response, error) {
+func (t *Transport) executeRequest(req *resty.Request, method, path string) (*resty.Response, error) {
+	ctx := req.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	// Total retry deadline
+	if t.totalRetryDuration > 0 {
+		if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, t.totalRetryDuration)
+			defer cancel()
+			req.SetContext(ctx)
+		}
+	}
+
+	// Concurrency semaphore
+	if t.sem != nil {
+		select {
+		case t.sem <- struct{}{}:
+			defer func() { <-t.sem }()
+		case <-ctx.Done():
+			return nil, fmt.Errorf("concurrency limit: %w", ctx.Err())
+		}
+	}
+
 	t.logger.Debug("Executing API request",
 		zap.String("method", method),
 		zap.String("path", path))
@@ -45,25 +69,23 @@ func (t *Transport) executeRequest(req *resty.Request, method, path string) (*in
 	case "POST":
 		resp, err = req.Post(path)
 	default:
-		return toInterfaceResponse(nil), fmt.Errorf("unsupported HTTP method: %s", method)
+		return nil, fmt.Errorf("unsupported HTTP method: %s", method)
 	}
-
-	clientResp := toInterfaceResponse(resp)
 
 	if err != nil {
 		t.logger.Error("Request failed",
 			zap.String("method", method),
 			zap.String("path", path),
 			zap.Error(err))
-		return clientResp, fmt.Errorf("request failed: %w", err)
+		return resp, fmt.Errorf("request failed: %w", err)
 	}
 
 	if err := t.validateResponse(resp, method, path); err != nil {
-		return clientResp, err
+		return resp, err
 	}
 
-	if IsResponseError(clientResp) {
-		return clientResp, ParseErrorResponse(
+	if resp.IsError() {
+		return resp, ParseErrorResponse(
 			[]byte(resp.String()),
 			resp.StatusCode(),
 			resp.Status(),
@@ -76,7 +98,12 @@ func (t *Transport) executeRequest(req *resty.Request, method, path string) (*in
 	t.logger.Debug("Request completed successfully",
 		zap.String("method", method),
 		zap.String("path", path),
-		zap.Int("status_code", clientResp.StatusCode))
+		zap.Int("status_code", resp.StatusCode()))
 
-	return clientResp, nil
+	// Mandatory fixed delay
+	if t.requestDelay > 0 {
+		time.Sleep(t.requestDelay)
+	}
+
+	return resp, nil
 }

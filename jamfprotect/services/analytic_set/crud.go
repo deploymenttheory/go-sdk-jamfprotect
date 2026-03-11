@@ -5,21 +5,21 @@ import (
 	"fmt"
 
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/interfaces"
+	"resty.dev/v3"
 )
 
 // Service provides operations for Jamf Protect Analytic Sets
 type Service struct {
-	client interfaces.GraphQLClient
+	client client.GraphQLClient
 }
 
 // NewService creates a new Analytic Sets service
-func NewService(client interfaces.GraphQLClient) *Service {
-	return &Service{client: client}
+func NewService(c client.GraphQLClient) *Service {
+	return &Service{client: c}
 }
 
 // CreateAnalyticSet creates a new analytic set
-func (s *Service) CreateAnalyticSet(ctx context.Context, req *CreateAnalyticSetRequest) (*AnalyticSet, *interfaces.Response, error) {
+func (s *Service) CreateAnalyticSet(ctx context.Context, req *CreateAnalyticSetRequest) (*AnalyticSet, *resty.Response, error) {
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
 	}
@@ -30,17 +30,16 @@ func (s *Service) CreateAnalyticSet(ctx context.Context, req *CreateAnalyticSetR
 		return nil, nil, fmt.Errorf("%w: analytics is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := analyticSetMutationVariables(req, "")
 	var result struct {
 		CreateAnalyticSet *AnalyticSet `json:"createAnalyticSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, createAnalyticSetMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(createAnalyticSetMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to create analytic set: %w", err)
 	}
@@ -49,14 +48,9 @@ func (s *Service) CreateAnalyticSet(ctx context.Context, req *CreateAnalyticSetR
 }
 
 // GetAnalyticSet retrieves an analytic set by UUID
-func (s *Service) GetAnalyticSet(ctx context.Context, uuid string) (*AnalyticSet, *interfaces.Response, error) {
+func (s *Service) GetAnalyticSet(ctx context.Context, uuid string) (*AnalyticSet, *resty.Response, error) {
 	if err := ValidateAnalyticSetUUID(uuid); err != nil {
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
-	}
-
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
 	}
 
 	vars := map[string]any{
@@ -68,7 +62,11 @@ func (s *Service) GetAnalyticSet(ctx context.Context, uuid string) (*AnalyticSet
 		GetAnalyticSet *AnalyticSet `json:"getAnalyticSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, getAnalyticSetQuery, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(getAnalyticSetQuery).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get analytic set: %w", err)
 	}
@@ -77,7 +75,7 @@ func (s *Service) GetAnalyticSet(ctx context.Context, uuid string) (*AnalyticSet
 }
 
 // UpdateAnalyticSet updates an existing analytic set
-func (s *Service) UpdateAnalyticSet(ctx context.Context, uuid string, req *UpdateAnalyticSetRequest) (*AnalyticSet, *interfaces.Response, error) {
+func (s *Service) UpdateAnalyticSet(ctx context.Context, uuid string, req *UpdateAnalyticSetRequest) (*AnalyticSet, *resty.Response, error) {
 	if err := ValidateAnalyticSetUUID(uuid); err != nil {
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
@@ -91,17 +89,16 @@ func (s *Service) UpdateAnalyticSet(ctx context.Context, uuid string, req *Updat
 		return nil, nil, fmt.Errorf("%w: analytics is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := analyticSetMutationVariables(req, uuid)
 	var result struct {
 		UpdateAnalyticSet *AnalyticSet `json:"updateAnalyticSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, updateAnalyticSetMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(updateAnalyticSetMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointGraphQL)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to update analytic set: %w", err)
 	}
@@ -110,19 +107,17 @@ func (s *Service) UpdateAnalyticSet(ctx context.Context, uuid string, req *Updat
 }
 
 // DeleteAnalyticSet deletes an analytic set by UUID
-func (s *Service) DeleteAnalyticSet(ctx context.Context, uuid string) (*interfaces.Response, error) {
+func (s *Service) DeleteAnalyticSet(ctx context.Context, uuid string) (*resty.Response, error) {
 	if err := ValidateAnalyticSetUUID(uuid); err != nil {
 		return nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := map[string]any{"uuid": uuid}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, deleteAnalyticSetMutation, vars, nil, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(deleteAnalyticSetMutation).
+		SetVariables(vars).
+		Post(client.EndpointApp)
 	if err != nil {
 		return resp, fmt.Errorf("failed to delete analytic set: %w", err)
 	}
@@ -131,15 +126,10 @@ func (s *Service) DeleteAnalyticSet(ctx context.Context, uuid string) (*interfac
 }
 
 // ListAnalyticSets retrieves all analytic sets with automatic pagination
-func (s *Service) ListAnalyticSets(ctx context.Context) ([]AnalyticSet, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListAnalyticSets(ctx context.Context) ([]AnalyticSet, *resty.Response, error) {
 	allItems := make([]AnalyticSet, 0)
 	var nextToken *string
-	var lastResp *interfaces.Response
+	var lastResp *resty.Response
 
 	for {
 		vars := map[string]any{
@@ -154,7 +144,11 @@ func (s *Service) ListAnalyticSets(ctx context.Context) ([]AnalyticSet, *interfa
 			ListAnalyticSets *ListAnalyticSetsResponse `json:"listAnalyticSets"`
 		}
 
-		resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listAnalyticSetsQuery, vars, &result, headers)
+		resp, err := s.client.NewRequest(ctx).
+			SetQuery(listAnalyticSetsQuery).
+			SetVariables(vars).
+			SetTarget(&result).
+			Post(client.EndpointApp)
 		lastResp = resp
 		if err != nil {
 			return nil, lastResp, fmt.Errorf("failed to list analytic sets: %w", err)

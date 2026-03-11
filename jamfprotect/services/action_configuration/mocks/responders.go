@@ -1,26 +1,26 @@
 package mocks
 
 import (
-	"net/http"
-	"os"
-	"path/filepath"
-	"runtime"
-
-	"github.com/jarcoal/httpmock"
+	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
+	coremocks "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/mocks"
 )
 
 // ActionConfigMock provides mock responses for the ActionConfiguration service GraphQL operations.
 // All operations POST to the /app endpoint and are distinguished by operation name in the request body.
 type ActionConfigMock struct {
-	baseURL string
+	*coremocks.GenericGraphQLMock
 }
 
-// NewActionConfigMock creates a new ActionConfigMock instance
-func NewActionConfigMock(baseURL string) *ActionConfigMock {
-	return &ActionConfigMock{baseURL: baseURL}
+// NewActionConfigMock creates a new ActionConfigMock instance.
+func NewActionConfigMock() *ActionConfigMock {
+	return &ActionConfigMock{
+		GenericGraphQLMock: coremocks.NewGenericGraphQLMock(coremocks.GenericGraphQLMockConfig{
+			Name: "ActionConfigMock",
+		}),
+	}
 }
 
-// RegisterMocks registers all successful response mocks for action config operations
+// RegisterMocks registers all successful response mocks for action config operations.
 func (m *ActionConfigMock) RegisterMocks() {
 	m.RegisterCreateActionConfigMock()
 	m.RegisterGetActionConfigMock()
@@ -30,134 +30,48 @@ func (m *ActionConfigMock) RegisterMocks() {
 	m.RegisterListActionConfigNamesMock()
 }
 
-// RegisterErrorMocks registers error response mocks
+// RegisterErrorMocks registers error response mocks.
 func (m *ActionConfigMock) RegisterErrorMocks() {
-	m.RegisterUnauthorizedErrorMock()
 	m.RegisterNotFoundErrorMock()
+	m.RegisterUnauthorizedErrorMock()
 }
 
-// RegisterCreateActionConfigMock registers a success mock for createActionConfigs
+// RegisterCreateActionConfigMock registers a success mock for createActionConfigs.
 func (m *ActionConfigMock) RegisterCreateActionConfigMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("createActionConfigs"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_action_config_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "createActionConfigs", 200, "create_action_config_success.json")
 }
 
-// RegisterGetActionConfigMock registers a success mock for getActionConfigs
+// RegisterGetActionConfigMock registers a success mock for getActionConfigs.
 func (m *ActionConfigMock) RegisterGetActionConfigMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("getActionConfigs"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_action_config_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "getActionConfigs", 200, "get_action_config_success.json")
 }
 
-// RegisterUpdateActionConfigMock registers a success mock for updateActionConfigs
+// RegisterUpdateActionConfigMock registers a success mock for updateActionConfigs.
 func (m *ActionConfigMock) RegisterUpdateActionConfigMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("updateActionConfigs"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_action_config_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "updateActionConfigs", 200, "update_action_config_success.json")
 }
 
-// RegisterDeleteActionConfigMock registers a success mock for deleteActionConfigs
+// RegisterDeleteActionConfigMock registers a success mock for deleteActionConfigs.
 func (m *ActionConfigMock) RegisterDeleteActionConfigMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("deleteActionConfigs"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_action_config_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "deleteActionConfigs", 200, "delete_action_config_success.json")
 }
 
-// RegisterListActionConfigsMock registers a success mock for listActionConfigs
+// RegisterListActionConfigsMock registers a success mock for listActionConfigs.
 func (m *ActionConfigMock) RegisterListActionConfigsMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("listActionConfigs"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_action_configs_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "listActionConfigs", 200, "list_action_configs_success.json")
 }
 
-// RegisterListActionConfigNamesMock registers a success mock for listActionConfigNames
+// RegisterListActionConfigNamesMock registers a success mock for listActionConfigNames.
 func (m *ActionConfigMock) RegisterListActionConfigNamesMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("listActionConfigNames"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_action_config_names_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "listActionConfigNames", 200, "list_action_config_names_success.json")
 }
 
-// RegisterUnauthorizedErrorMock registers a 401 unauthorized error mock
-func (m *ActionConfigMock) RegisterUnauthorizedErrorMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("getActionConfigs"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
-}
-
-// RegisterNotFoundErrorMock registers a not-found error mock
+// RegisterNotFoundErrorMock registers a not-found error mock.
 func (m *ActionConfigMock) RegisterNotFoundErrorMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("getActionConfigs"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.RegisterError(client.EndpointApp, "getActionConfigs", 200, "error_not_found.json", "graphql operation failed: ActionConfig not found")
 }
 
-// loadMockData loads mock JSON data from a file relative to this source file
-func (m *ActionConfigMock) loadMockData(filename string) []byte {
-	_, currentFile, _, _ := runtime.Caller(0)
-	mockDir := filepath.Dir(currentFile)
-	mockFile := filepath.Join(mockDir, filename)
-
-	data, err := os.ReadFile(mockFile)
-	if err != nil {
-		panic("Failed to load mock data: " + err.Error())
-	}
-
-	return data
+// RegisterUnauthorizedErrorMock registers a 401 unauthorized error mock.
+func (m *ActionConfigMock) RegisterUnauthorizedErrorMock() {
+	m.RegisterError(client.EndpointApp, "getActionConfigs", 401, "error_unauthorized.json", "Jamf Protect API error: unauthorized")
 }

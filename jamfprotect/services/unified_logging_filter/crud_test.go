@@ -2,51 +2,25 @@ package unifiedloggingfilter_test
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/unified_logging_filter"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/unified_logging_filter/mocks"
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testBaseURL = "https://test.jamfprotect.example.com"
-
 const testUUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
 
-func setupMockClient(t *testing.T) (*unifiedloggingfilter.Service, string) {
+func setupMockService(t *testing.T) (*unifiedloggingfilter.Service, *mocks.UnifiedLoggingFilterMock) {
 	t.Helper()
-
-	httpClient := &http.Client{}
-	httpmock.ActivateNonDefault(httpClient)
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
-
-	httpmock.RegisterResponder("POST", testBaseURL+"/token",
-		httpmock.NewJsonResponderOrPanic(200, map[string]any{
-			"access_token": "mock-token",
-			"expires_in":   3600,
-			"token_type":   "Bearer",
-		}),
-	)
-
-	transport, err := client.NewTransport("test-client", "test-secret",
-		client.WithBaseURL(testBaseURL),
-		client.WithTransport(httpClient.Transport),
-	)
-	require.NoError(t, err)
-
-	return unifiedloggingfilter.NewService(transport), testBaseURL
+	mock := mocks.NewUnifiedLoggingFilterMock()
+	return unifiedloggingfilter.NewService(mock), mock
 }
 
 func TestUnifiedLoggingFilterService_CreateUnifiedLoggingFilter(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUnifiedLoggingFilterMock(baseURL)
-	mockHandler.RegisterCreateUnifiedLoggingFilterMock()
+	service, mock := setupMockService(t)
+	mock.RegisterCreateUnifiedLoggingFilterMock()
 
 	req := &unifiedloggingfilter.CreateUnifiedLoggingFilterRequest{
 		Name:        "Test Unified Logging Filter",
@@ -64,9 +38,8 @@ func TestUnifiedLoggingFilterService_CreateUnifiedLoggingFilter(t *testing.T) {
 }
 
 func TestUnifiedLoggingFilterService_GetUnifiedLoggingFilter(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUnifiedLoggingFilterMock(baseURL)
-	mockHandler.RegisterGetUnifiedLoggingFilterMock()
+	service, mock := setupMockService(t)
+	mock.RegisterGetUnifiedLoggingFilterMock()
 
 	result, _, err := service.GetUnifiedLoggingFilter(context.Background(), testUUID)
 
@@ -77,9 +50,8 @@ func TestUnifiedLoggingFilterService_GetUnifiedLoggingFilter(t *testing.T) {
 }
 
 func TestUnifiedLoggingFilterService_UpdateUnifiedLoggingFilter(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUnifiedLoggingFilterMock(baseURL)
-	mockHandler.RegisterUpdateUnifiedLoggingFilterMock()
+	service, mock := setupMockService(t)
+	mock.RegisterUpdateUnifiedLoggingFilterMock()
 
 	req := &unifiedloggingfilter.UpdateUnifiedLoggingFilterRequest{
 		Name:        "Updated Unified Logging Filter",
@@ -97,9 +69,8 @@ func TestUnifiedLoggingFilterService_UpdateUnifiedLoggingFilter(t *testing.T) {
 }
 
 func TestUnifiedLoggingFilterService_DeleteUnifiedLoggingFilter(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUnifiedLoggingFilterMock(baseURL)
-	mockHandler.RegisterDeleteUnifiedLoggingFilterMock()
+	service, mock := setupMockService(t)
+	mock.RegisterDeleteUnifiedLoggingFilterMock()
 
 	_, err := service.DeleteUnifiedLoggingFilter(context.Background(), testUUID)
 
@@ -107,9 +78,8 @@ func TestUnifiedLoggingFilterService_DeleteUnifiedLoggingFilter(t *testing.T) {
 }
 
 func TestUnifiedLoggingFilterService_ListUnifiedLoggingFilters(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUnifiedLoggingFilterMock(baseURL)
-	mockHandler.RegisterListUnifiedLoggingFiltersMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListUnifiedLoggingFiltersMock()
 
 	result, _, err := service.ListUnifiedLoggingFilters(context.Background())
 
@@ -120,9 +90,8 @@ func TestUnifiedLoggingFilterService_ListUnifiedLoggingFilters(t *testing.T) {
 }
 
 func TestUnifiedLoggingFilterService_ListUnifiedLoggingFilterNames(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewUnifiedLoggingFilterMock(baseURL)
-	mockHandler.RegisterListUnifiedLoggingFilterNamesMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListUnifiedLoggingFilterNamesMock()
 
 	result, _, err := service.ListUnifiedLoggingFilterNames(context.Background())
 
@@ -132,7 +101,7 @@ func TestUnifiedLoggingFilterService_ListUnifiedLoggingFilterNames(t *testing.T)
 }
 
 func TestUnifiedLoggingFilterService_ValidationErrors(t *testing.T) {
-	service, _ := setupMockClient(t)
+	service, _ := setupMockService(t)
 
 	tests := []struct {
 		name    string

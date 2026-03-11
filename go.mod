@@ -3,7 +3,6 @@ module github.com/deploymenttheory/go-api-sdk-jamfprotect
 go 1.25.3
 
 require (
-	github.com/jarcoal/httpmock v1.4.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0
 	go.opentelemetry.io/otel v1.42.0

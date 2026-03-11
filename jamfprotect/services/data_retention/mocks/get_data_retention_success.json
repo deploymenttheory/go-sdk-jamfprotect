@@ -1,0 +1,1 @@
+{"data":{"getOrganization":{"retention":{"database":{"log":{"numberOfDays":90},"alert":{"numberOfDays":365}},"cold":{"alert":{"numberOfDays":730}},"updated":"2024-01-01T00:00:00.000Z"}}}}

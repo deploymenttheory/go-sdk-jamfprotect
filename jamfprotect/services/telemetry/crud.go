@@ -5,21 +5,21 @@ import (
 	"fmt"
 
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/interfaces"
+	"resty.dev/v3"
 )
 
 // Service provides operations for Jamf Protect Telemetry V2
 type Service struct {
-	client interfaces.GraphQLClient
+	client client.GraphQLClient
 }
 
 // NewService creates a new Telemetry V2 service
-func NewService(client interfaces.GraphQLClient) *Service {
-	return &Service{client: client}
+func NewService(c client.GraphQLClient) *Service {
+	return &Service{client: c}
 }
 
 // CreateTelemetryV2 creates a new telemetry v2 configuration
-func (s *Service) CreateTelemetryV2(ctx context.Context, req *CreateTelemetryV2Request) (*TelemetryV2, *interfaces.Response, error) {
+func (s *Service) CreateTelemetryV2(ctx context.Context, req *CreateTelemetryV2Request) (*TelemetryV2, *resty.Response, error) {
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
 	}
@@ -30,18 +30,17 @@ func (s *Service) CreateTelemetryV2(ctx context.Context, req *CreateTelemetryV2R
 		return nil, nil, fmt.Errorf("%w: logFiles is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := telemetryMutationVariables(req)
 	vars["RBAC_Plan"] = true
 	var result struct {
 		CreateTelemetryV2 *TelemetryV2 `json:"createTelemetryV2"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, createTelemetryV2Mutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(createTelemetryV2Mutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to create telemetry v2: %w", err)
 	}
@@ -50,14 +49,9 @@ func (s *Service) CreateTelemetryV2(ctx context.Context, req *CreateTelemetryV2R
 }
 
 // GetTelemetryV2 retrieves telemetry v2 by ID
-func (s *Service) GetTelemetryV2(ctx context.Context, id string) (*TelemetryV2, *interfaces.Response, error) {
+func (s *Service) GetTelemetryV2(ctx context.Context, id string) (*TelemetryV2, *resty.Response, error) {
 	if id == "" {
 		return nil, nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
-	}
-
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
 	}
 
 	vars := map[string]any{
@@ -68,7 +62,11 @@ func (s *Service) GetTelemetryV2(ctx context.Context, id string) (*TelemetryV2, 
 		GetTelemetryV2 *TelemetryV2 `json:"getTelemetryV2"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, getTelemetryV2Query, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(getTelemetryV2Query).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get telemetry v2: %w", err)
 	}
@@ -77,7 +75,7 @@ func (s *Service) GetTelemetryV2(ctx context.Context, id string) (*TelemetryV2, 
 }
 
 // UpdateTelemetryV2 updates telemetry v2 by ID
-func (s *Service) UpdateTelemetryV2(ctx context.Context, id string, req *UpdateTelemetryV2Request) (*TelemetryV2, *interfaces.Response, error) {
+func (s *Service) UpdateTelemetryV2(ctx context.Context, id string, req *UpdateTelemetryV2Request) (*TelemetryV2, *resty.Response, error) {
 	if id == "" {
 		return nil, nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
 	}
@@ -91,11 +89,6 @@ func (s *Service) UpdateTelemetryV2(ctx context.Context, id string, req *UpdateT
 		return nil, nil, fmt.Errorf("%w: logFiles is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := telemetryMutationVariables(req)
 	vars["id"] = id
 	vars["RBAC_Plan"] = true
@@ -103,7 +96,11 @@ func (s *Service) UpdateTelemetryV2(ctx context.Context, id string, req *UpdateT
 		UpdateTelemetryV2 *TelemetryV2 `json:"updateTelemetryV2"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, updateTelemetryV2Mutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(updateTelemetryV2Mutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to update telemetry v2: %w", err)
 	}
@@ -112,19 +109,17 @@ func (s *Service) UpdateTelemetryV2(ctx context.Context, id string, req *UpdateT
 }
 
 // DeleteTelemetryV2 deletes telemetry v2 by ID
-func (s *Service) DeleteTelemetryV2(ctx context.Context, id string) (*interfaces.Response, error) {
+func (s *Service) DeleteTelemetryV2(ctx context.Context, id string) (*resty.Response, error) {
 	if id == "" {
 		return nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := map[string]any{"id": id}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, deleteTelemetryV2Mutation, vars, nil, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(deleteTelemetryV2Mutation).
+		SetVariables(vars).
+		Post(client.EndpointApp)
 	if err != nil {
 		return resp, fmt.Errorf("failed to delete telemetry v2: %w", err)
 	}
@@ -133,15 +128,10 @@ func (s *Service) DeleteTelemetryV2(ctx context.Context, id string) (*interfaces
 }
 
 // ListTelemetriesV2 retrieves all telemetry v2 configurations with automatic pagination
-func (s *Service) ListTelemetriesV2(ctx context.Context) ([]TelemetryV2, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListTelemetriesV2(ctx context.Context) ([]TelemetryV2, *resty.Response, error) {
 	allItems := make([]TelemetryV2, 0)
 	var nextToken *string
-	var lastResp *interfaces.Response
+	var lastResp *resty.Response
 
 	for {
 		vars := map[string]any{
@@ -157,7 +147,11 @@ func (s *Service) ListTelemetriesV2(ctx context.Context) ([]TelemetryV2, *interf
 			ListTelemetriesV2 *ListTelemetriesV2Response `json:"listTelemetriesV2"`
 		}
 
-		resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listTelemetriesV2Query, vars, &result, headers)
+		resp, err := s.client.NewRequest(ctx).
+			SetQuery(listTelemetriesV2Query).
+			SetVariables(vars).
+			SetTarget(&result).
+			Post(client.EndpointApp)
 		lastResp = resp
 		if err != nil {
 			return nil, lastResp, fmt.Errorf("failed to list telemetries v2: %w", err)
@@ -179,12 +173,7 @@ func (s *Service) ListTelemetriesV2(ctx context.Context) ([]TelemetryV2, *interf
 
 // ListTelemetriesCombined retrieves both v1 and v2 telemetries in a single query.
 // The RBAC_Plan flag controls whether plan associations are included in the response.
-func (s *Service) ListTelemetriesCombined(ctx context.Context, includePlans bool) (*TelemetriesCombinedResponse, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListTelemetriesCombined(ctx context.Context, includePlans bool) (*TelemetriesCombinedResponse, *resty.Response, error) {
 	vars := map[string]any{
 		"field":     "created",
 		"direction": "ASC",
@@ -200,7 +189,11 @@ func (s *Service) ListTelemetriesCombined(ctx context.Context, includePlans bool
 		} `json:"listTelemetriesV2"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listTelemetriesCombinedQuery, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(listTelemetriesCombinedQuery).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list combined telemetries: %w", err)
 	}

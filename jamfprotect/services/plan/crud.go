@@ -5,21 +5,21 @@ import (
 	"fmt"
 
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/interfaces"
+	"resty.dev/v3"
 )
 
 // Service provides operations for Jamf Protect Plans
 type Service struct {
-	client interfaces.GraphQLClient
+	client client.GraphQLClient
 }
 
 // NewService creates a new Plans service
-func NewService(client interfaces.GraphQLClient) *Service {
-	return &Service{client: client}
+func NewService(c client.GraphQLClient) *Service {
+	return &Service{client: c}
 }
 
 // CreatePlan creates a new plan
-func (s *Service) CreatePlan(ctx context.Context, req *CreatePlanRequest) (*Plan, *interfaces.Response, error) {
+func (s *Service) CreatePlan(ctx context.Context, req *CreatePlanRequest) (*Plan, *resty.Response, error) {
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
 	}
@@ -33,17 +33,16 @@ func (s *Service) CreatePlan(ctx context.Context, req *CreatePlanRequest) (*Plan
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := planMutationVariables(req)
 	var result struct {
 		CreatePlan *Plan `json:"createPlan"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, createPlanMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(createPlanMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to create plan: %w", err)
 	}
@@ -52,14 +51,9 @@ func (s *Service) CreatePlan(ctx context.Context, req *CreatePlanRequest) (*Plan
 }
 
 // GetPlan retrieves a plan by ID
-func (s *Service) GetPlan(ctx context.Context, id string) (*Plan, *interfaces.Response, error) {
+func (s *Service) GetPlan(ctx context.Context, id string) (*Plan, *resty.Response, error) {
 	if id == "" {
 		return nil, nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
-	}
-
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
 	}
 
 	vars := map[string]any{"id": id}
@@ -67,7 +61,11 @@ func (s *Service) GetPlan(ctx context.Context, id string) (*Plan, *interfaces.Re
 		GetPlan *Plan `json:"getPlan"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, getPlanQuery, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(getPlanQuery).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get plan: %w", err)
 	}
@@ -76,17 +74,12 @@ func (s *Service) GetPlan(ctx context.Context, id string) (*Plan, *interfaces.Re
 }
 
 // UpdatePlan updates an existing plan
-func (s *Service) UpdatePlan(ctx context.Context, id string, req *UpdatePlanRequest) (*Plan, *interfaces.Response, error) {
+func (s *Service) UpdatePlan(ctx context.Context, id string, req *UpdatePlanRequest) (*Plan, *resty.Response, error) {
 	if id == "" {
 		return nil, nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
 	}
 	if err := ValidateUpdatePlanRequest(req); err != nil {
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
-	}
-
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
 	}
 
 	vars := planMutationVariables(req)
@@ -95,7 +88,11 @@ func (s *Service) UpdatePlan(ctx context.Context, id string, req *UpdatePlanRequ
 		UpdatePlan *Plan `json:"updatePlan"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, updatePlanMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(updatePlanMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to update plan: %w", err)
 	}
@@ -104,19 +101,17 @@ func (s *Service) UpdatePlan(ctx context.Context, id string, req *UpdatePlanRequ
 }
 
 // DeletePlan deletes a plan by ID
-func (s *Service) DeletePlan(ctx context.Context, id string) (*interfaces.Response, error) {
+func (s *Service) DeletePlan(ctx context.Context, id string) (*resty.Response, error) {
 	if id == "" {
 		return nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := map[string]any{"id": id}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, deletePlanMutation, vars, nil, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(deletePlanMutation).
+		SetVariables(vars).
+		Post(client.EndpointApp)
 	if err != nil {
 		return resp, fmt.Errorf("failed to delete plan: %w", err)
 	}
@@ -125,15 +120,10 @@ func (s *Service) DeletePlan(ctx context.Context, id string) (*interfaces.Respon
 }
 
 // ListPlans retrieves all plans with automatic pagination
-func (s *Service) ListPlans(ctx context.Context) ([]Plan, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListPlans(ctx context.Context) ([]Plan, *resty.Response, error) {
 	allItems := make([]Plan, 0)
 	var nextToken *string
-	var lastResp *interfaces.Response
+	var lastResp *resty.Response
 
 	for {
 		vars := map[string]any{
@@ -148,7 +138,11 @@ func (s *Service) ListPlans(ctx context.Context) ([]Plan, *interfaces.Response, 
 			ListPlans *ListPlansResponse `json:"listPlans"`
 		}
 
-		resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listPlansQuery, vars, &result, headers)
+		resp, err := s.client.NewRequest(ctx).
+			SetQuery(listPlansQuery).
+			SetVariables(vars).
+			SetTarget(&result).
+			Post(client.EndpointApp)
 		lastResp = resp
 		if err != nil {
 			return nil, lastResp, fmt.Errorf("failed to list plans: %w", err)
@@ -169,15 +163,10 @@ func (s *Service) ListPlans(ctx context.Context) ([]Plan, *interfaces.Response, 
 }
 
 // ListPlanNames retrieves only the names of all plans with automatic pagination
-func (s *Service) ListPlanNames(ctx context.Context) ([]string, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListPlanNames(ctx context.Context) ([]string, *resty.Response, error) {
 	allNames := make([]string, 0)
 	var nextToken *string
-	var lastResp *interfaces.Response
+	var lastResp *resty.Response
 
 	for {
 		vars := map[string]any{}
@@ -189,7 +178,11 @@ func (s *Service) ListPlanNames(ctx context.Context) ([]string, *interfaces.Resp
 			ListPlanNames *ListPlanNamesResponse `json:"listPlanNames"`
 		}
 
-		resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listPlanNamesQuery, vars, &result, headers)
+		resp, err := s.client.NewRequest(ctx).
+			SetQuery(listPlanNamesQuery).
+			SetVariables(vars).
+			SetTarget(&result).
+			Post(client.EndpointApp)
 		lastResp = resp
 		if err != nil {
 			return nil, lastResp, fmt.Errorf("failed to list plan names: %w", err)
@@ -214,14 +207,9 @@ func (s *Service) ListPlanNames(ctx context.Context) ([]string, *interfaces.Resp
 // GetPlanConfigurationAndSetOptions retrieves all resources available for plan configuration,
 // gated by RBAC flags. Returns action configs, telemetries (v1 and v2), USB control sets,
 // exception sets, and both managed and unmanaged analytic sets.
-func (s *Service) GetPlanConfigurationAndSetOptions(ctx context.Context, req *GetPlanConfigurationAndSetOptionsRequest) (*PlanConfigurationAndSetOptions, *interfaces.Response, error) {
+func (s *Service) GetPlanConfigurationAndSetOptions(ctx context.Context, req *GetPlanConfigurationAndSetOptionsRequest) (*PlanConfigurationAndSetOptions, *resty.Response, error) {
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request is required", client.ErrInvalidInput)
-	}
-
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
 	}
 
 	vars := map[string]any{
@@ -256,7 +244,11 @@ func (s *Service) GetPlanConfigurationAndSetOptions(ctx context.Context, req *Ge
 		} `json:"managedAnalyticSets"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, getPlanConfigurationAndSetOptionsQuery, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(getPlanConfigurationAndSetOptionsQuery).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get plan configuration and set options: %w", err)
 	}

@@ -2,51 +2,25 @@ package exceptionset_test
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
 	exceptionset "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/exception_set"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/exception_set/mocks"
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testBaseURL = "https://test.jamfprotect.example.com"
-
 const testUUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
 
-func setupMockClient(t *testing.T) (*exceptionset.Service, string) {
+func setupMockService(t *testing.T) (*exceptionset.Service, *mocks.ExceptionSetMock) {
 	t.Helper()
-
-	httpClient := &http.Client{}
-	httpmock.ActivateNonDefault(httpClient)
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
-
-	httpmock.RegisterResponder("POST", testBaseURL+"/token",
-		httpmock.NewJsonResponderOrPanic(200, map[string]any{
-			"access_token": "mock-token",
-			"expires_in":   3600,
-			"token_type":   "Bearer",
-		}),
-	)
-
-	transport, err := client.NewTransport("test-client", "test-secret",
-		client.WithBaseURL(testBaseURL),
-		client.WithTransport(httpClient.Transport),
-	)
-	require.NoError(t, err)
-
-	return exceptionset.NewService(transport), testBaseURL
+	mock := mocks.NewExceptionSetMock()
+	return exceptionset.NewService(mock), mock
 }
 
 func TestExceptionSetService_CreateExceptionSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewExceptionSetMock(baseURL)
-	mockHandler.RegisterCreateExceptionSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterCreateExceptionSetMock()
 
 	req := &exceptionset.CreateExceptionSetRequest{
 		Name:        "Test Exception Set",
@@ -62,9 +36,8 @@ func TestExceptionSetService_CreateExceptionSet(t *testing.T) {
 }
 
 func TestExceptionSetService_GetExceptionSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewExceptionSetMock(baseURL)
-	mockHandler.RegisterGetExceptionSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterGetExceptionSetMock()
 
 	result, _, err := service.GetExceptionSet(context.Background(), testUUID)
 
@@ -75,9 +48,8 @@ func TestExceptionSetService_GetExceptionSet(t *testing.T) {
 }
 
 func TestExceptionSetService_UpdateExceptionSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewExceptionSetMock(baseURL)
-	mockHandler.RegisterUpdateExceptionSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterUpdateExceptionSetMock()
 
 	req := &exceptionset.UpdateExceptionSetRequest{
 		Name:        "Updated Exception Set",
@@ -93,9 +65,8 @@ func TestExceptionSetService_UpdateExceptionSet(t *testing.T) {
 }
 
 func TestExceptionSetService_DeleteExceptionSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewExceptionSetMock(baseURL)
-	mockHandler.RegisterDeleteExceptionSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterDeleteExceptionSetMock()
 
 	_, err := service.DeleteExceptionSet(context.Background(), testUUID)
 
@@ -103,9 +74,8 @@ func TestExceptionSetService_DeleteExceptionSet(t *testing.T) {
 }
 
 func TestExceptionSetService_ListExceptionSets(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewExceptionSetMock(baseURL)
-	mockHandler.RegisterListExceptionSetsMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListExceptionSetsMock()
 
 	result, _, err := service.ListExceptionSets(context.Background())
 
@@ -115,9 +85,8 @@ func TestExceptionSetService_ListExceptionSets(t *testing.T) {
 }
 
 func TestExceptionSetService_ListExceptionSetNames(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewExceptionSetMock(baseURL)
-	mockHandler.RegisterListExceptionSetNamesMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListExceptionSetNamesMock()
 
 	result, _, err := service.ListExceptionSetNames(context.Background())
 
@@ -127,7 +96,7 @@ func TestExceptionSetService_ListExceptionSetNames(t *testing.T) {
 }
 
 func TestExceptionSetService_ValidationErrors(t *testing.T) {
-	service, _ := setupMockClient(t)
+	service, _ := setupMockService(t)
 
 	tests := []struct {
 		name    string

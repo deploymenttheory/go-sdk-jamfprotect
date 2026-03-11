@@ -1,27 +1,27 @@
 package mocks
 
 import (
-	"net/http"
-	"os"
-	"path/filepath"
-	"runtime"
-
-	"github.com/jarcoal/httpmock"
+	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
+	coremocks "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/mocks"
 )
 
 // AnalyticMock provides mock responses for the Analytic service GraphQL operations.
 // Mutations (create/update/delete) POST to the /app endpoint; queries POST to the /graphql endpoint.
 // Operations are distinguished by operation name in the request body.
 type AnalyticMock struct {
-	baseURL string
+	*coremocks.GenericGraphQLMock
 }
 
-// NewAnalyticMock creates a new AnalyticMock instance
-func NewAnalyticMock(baseURL string) *AnalyticMock {
-	return &AnalyticMock{baseURL: baseURL}
+// NewAnalyticMock creates a new AnalyticMock instance.
+func NewAnalyticMock() *AnalyticMock {
+	return &AnalyticMock{
+		GenericGraphQLMock: coremocks.NewGenericGraphQLMock(coremocks.GenericGraphQLMockConfig{
+			Name: "AnalyticMock",
+		}),
+	}
 }
 
-// RegisterMocks registers all successful response mocks for analytic operations
+// RegisterMocks registers all successful response mocks for analytic operations.
 func (m *AnalyticMock) RegisterMocks() {
 	m.RegisterCreateAnalyticMock()
 	m.RegisterGetAnalyticMock()
@@ -35,190 +35,68 @@ func (m *AnalyticMock) RegisterMocks() {
 	m.RegisterListAnalyticsFilterOptionsMock()
 }
 
-// RegisterErrorMocks registers error response mocks
+// RegisterErrorMocks registers error response mocks.
 func (m *AnalyticMock) RegisterErrorMocks() {
-	m.RegisterUnauthorizedErrorMock()
 	m.RegisterNotFoundErrorMock()
+	m.RegisterUnauthorizedErrorMock()
 }
 
-// RegisterCreateAnalyticMock registers a success mock for createAnalytic
+// RegisterCreateAnalyticMock registers a success mock for createAnalytic.
 func (m *AnalyticMock) RegisterCreateAnalyticMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("createAnalytic"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_analytic_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "createAnalytic", 200, "create_analytic_success.json")
 }
 
-// RegisterGetAnalyticMock registers a success mock for getAnalytic
+// RegisterGetAnalyticMock registers a success mock for getAnalytic.
 func (m *AnalyticMock) RegisterGetAnalyticMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/graphql",
-		httpmock.BodyContainsString("getAnalytic"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_analytic_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointGraphQL, "getAnalytic", 200, "get_analytic_success.json")
 }
 
-// RegisterUpdateAnalyticMock registers a success mock for updateAnalytic
+// RegisterUpdateAnalyticMock registers a success mock for updateAnalytic.
 func (m *AnalyticMock) RegisterUpdateAnalyticMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("updateAnalytic"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_analytic_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "updateAnalytic", 200, "update_analytic_success.json")
 }
 
-// RegisterDeleteAnalyticMock registers a success mock for deleteAnalytic
+// RegisterDeleteAnalyticMock registers a success mock for deleteAnalytic.
 func (m *AnalyticMock) RegisterDeleteAnalyticMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("deleteAnalytic"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_analytic_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "deleteAnalytic", 200, "delete_analytic_success.json")
 }
 
-// RegisterListAnalyticsMock registers a success mock for listAnalytics
+// RegisterListAnalyticsMock registers a success mock for listAnalytics.
 func (m *AnalyticMock) RegisterListAnalyticsMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/graphql",
-		httpmock.BodyContainsString("listAnalytics"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointGraphQL, "listAnalytics", 200, "list_analytics_success.json")
 }
 
-// RegisterListAnalyticsLiteMock registers a success mock for listAnalytics (lite query)
+// RegisterListAnalyticsLiteMock registers a success mock for listAnalyticsLite.
 func (m *AnalyticMock) RegisterListAnalyticsLiteMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/graphql",
-		httpmock.BodyContainsString("listAnalyticsLite"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_lite_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointGraphQL, "listAnalyticsLite", 200, "list_analytics_lite_success.json")
 }
 
-// RegisterListAnalyticsNamesMock registers a success mock for listAnalyticsNames
+// RegisterListAnalyticsNamesMock registers a success mock for listAnalyticsNames.
 func (m *AnalyticMock) RegisterListAnalyticsNamesMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/graphql",
-		httpmock.BodyContainsString("listAnalyticsNames"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_names_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointGraphQL, "listAnalyticsNames", 200, "list_analytics_names_success.json")
 }
 
-// RegisterListAnalyticsCategoriesMock registers a success mock for listAnalyticsCategories
+// RegisterListAnalyticsCategoriesMock registers a success mock for listAnalyticsCategories.
 func (m *AnalyticMock) RegisterListAnalyticsCategoriesMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/graphql",
-		httpmock.BodyContainsString("listAnalyticsCategories"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_categories_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointGraphQL, "listAnalyticsCategories", 200, "list_analytics_categories_success.json")
 }
 
-// RegisterListAnalyticsTagsMock registers a success mock for listAnalyticsTags
+// RegisterListAnalyticsTagsMock registers a success mock for listAnalyticsTags.
 func (m *AnalyticMock) RegisterListAnalyticsTagsMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/graphql",
-		httpmock.BodyContainsString("listAnalyticsTags"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_tags_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointGraphQL, "listAnalyticsTags", 200, "list_analytics_tags_success.json")
 }
 
-// RegisterListAnalyticsFilterOptionsMock registers a success mock for listAnalyticsFilterOptions
+// RegisterListAnalyticsFilterOptionsMock registers a success mock for listAnalyticsFilterOptions.
 func (m *AnalyticMock) RegisterListAnalyticsFilterOptionsMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/graphql",
-		httpmock.BodyContainsString("listAnalyticsFilterOptions"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_filter_options_success.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointGraphQL, "listAnalyticsFilterOptions", 200, "list_analytics_filter_options_success.json")
 }
 
-// RegisterUnauthorizedErrorMock registers a 401 unauthorized error mock
-func (m *AnalyticMock) RegisterUnauthorizedErrorMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/graphql",
-		httpmock.BodyContainsString("getAnalytic"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
-}
-
-// RegisterNotFoundErrorMock registers a not-found error mock
+// RegisterNotFoundErrorMock registers a not-found error mock.
 func (m *AnalyticMock) RegisterNotFoundErrorMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/graphql",
-		httpmock.BodyContainsString("getAnalytic"),
-		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
-	)
+	m.RegisterError(client.EndpointGraphQL, "getAnalytic", 200, "error_not_found.json", "graphql operation failed: Analytic not found")
 }
 
-// loadMockData loads mock JSON data from a file relative to this source file
-func (m *AnalyticMock) loadMockData(filename string) []byte {
-	_, currentFile, _, _ := runtime.Caller(0)
-	mockDir := filepath.Dir(currentFile)
-	mockFile := filepath.Join(mockDir, filename)
-
-	data, err := os.ReadFile(mockFile)
-	if err != nil {
-		panic("Failed to load mock data: " + err.Error())
-	}
-
-	return data
+// RegisterUnauthorizedErrorMock registers a 401 unauthorized error mock.
+func (m *AnalyticMock) RegisterUnauthorizedErrorMock() {
+	m.RegisterError(client.EndpointGraphQL, "getAnalytic", 401, "error_unauthorized.json", "Jamf Protect API error: unauthorized")
 }

@@ -2,49 +2,23 @@ package custompreventlist_test
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/custom_prevent_list"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/custom_prevent_list/mocks"
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testBaseURL = "https://test.jamfprotect.example.com"
-
-func setupMockClient(t *testing.T) (*custompreventlist.Service, string) {
+func setupMockService(t *testing.T) (*custompreventlist.Service, *mocks.PreventListMock) {
 	t.Helper()
-
-	httpClient := &http.Client{}
-	httpmock.ActivateNonDefault(httpClient)
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
-
-	httpmock.RegisterResponder("POST", testBaseURL+"/token",
-		httpmock.NewJsonResponderOrPanic(200, map[string]any{
-			"access_token": "mock-token",
-			"expires_in":   3600,
-			"token_type":   "Bearer",
-		}),
-	)
-
-	transport, err := client.NewTransport("test-client", "test-secret",
-		client.WithBaseURL(testBaseURL),
-		client.WithTransport(httpClient.Transport),
-	)
-	require.NoError(t, err)
-
-	return custompreventlist.NewService(transport), testBaseURL
+	mock := mocks.NewPreventListMock()
+	return custompreventlist.NewService(mock), mock
 }
 
 func TestPreventListService_CreatePreventList(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPreventListMock(baseURL)
-	mockHandler.RegisterCreatePreventListMock()
+	service, mock := setupMockService(t)
+	mock.RegisterCreatePreventListMock()
 
 	req := &custompreventlist.CreatePreventListRequest{
 		Name:        "Test Prevent List",
@@ -61,9 +35,8 @@ func TestPreventListService_CreatePreventList(t *testing.T) {
 }
 
 func TestPreventListService_GetPreventList(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPreventListMock(baseURL)
-	mockHandler.RegisterGetPreventListMock()
+	service, mock := setupMockService(t)
+	mock.RegisterGetPreventListMock()
 
 	result, _, err := service.GetPreventList(context.Background(), "test-id-1234")
 
@@ -74,9 +47,8 @@ func TestPreventListService_GetPreventList(t *testing.T) {
 }
 
 func TestPreventListService_UpdatePreventList(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPreventListMock(baseURL)
-	mockHandler.RegisterUpdatePreventListMock()
+	service, mock := setupMockService(t)
+	mock.RegisterUpdatePreventListMock()
 
 	req := &custompreventlist.UpdatePreventListRequest{
 		Name:        "Updated Prevent List",
@@ -93,9 +65,8 @@ func TestPreventListService_UpdatePreventList(t *testing.T) {
 }
 
 func TestPreventListService_DeletePreventList(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPreventListMock(baseURL)
-	mockHandler.RegisterDeletePreventListMock()
+	service, mock := setupMockService(t)
+	mock.RegisterDeletePreventListMock()
 
 	_, err := service.DeletePreventList(context.Background(), "test-id-1234")
 
@@ -103,9 +74,8 @@ func TestPreventListService_DeletePreventList(t *testing.T) {
 }
 
 func TestPreventListService_ListPreventLists(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPreventListMock(baseURL)
-	mockHandler.RegisterListPreventListsMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListPreventListsMock()
 
 	result, _, err := service.ListPreventLists(context.Background())
 
@@ -116,9 +86,8 @@ func TestPreventListService_ListPreventLists(t *testing.T) {
 }
 
 func TestPreventListService_ListPreventListNames(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewPreventListMock(baseURL)
-	mockHandler.RegisterListPreventListNamesMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListPreventListNamesMock()
 
 	result, _, err := service.ListPreventListNames(context.Background())
 
@@ -128,7 +97,7 @@ func TestPreventListService_ListPreventListNames(t *testing.T) {
 }
 
 func TestPreventListService_ValidationErrors(t *testing.T) {
-	service, _ := setupMockClient(t)
+	service, _ := setupMockService(t)
 
 	tests := []struct {
 		name    string

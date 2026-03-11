@@ -5,21 +5,21 @@ import (
 	"fmt"
 
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/interfaces"
+	"resty.dev/v3"
 )
 
 // Service provides operations for Jamf Protect USB Control Sets
 type Service struct {
-	client interfaces.GraphQLClient
+	client client.GraphQLClient
 }
 
 // NewService creates a new USB Control Sets service
-func NewService(client interfaces.GraphQLClient) *Service {
-	return &Service{client: client}
+func NewService(c client.GraphQLClient) *Service {
+	return &Service{client: c}
 }
 
 // CreateUSBControlSet creates a new USB control set
-func (s *Service) CreateUSBControlSet(ctx context.Context, req *CreateUSBControlSetRequest) (*USBControlSet, *interfaces.Response, error) {
+func (s *Service) CreateUSBControlSet(ctx context.Context, req *CreateUSBControlSetRequest) (*USBControlSet, *resty.Response, error) {
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
 	}
@@ -36,17 +36,16 @@ func (s *Service) CreateUSBControlSet(ctx context.Context, req *CreateUSBControl
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := usbControlSetMutationVariables(req, "")
 	var result struct {
 		CreateUSBControlSet *USBControlSet `json:"createUSBControlSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, createUSBControlSetMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(createUSBControlSetMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to create USB control set: %w", err)
 	}
@@ -55,14 +54,9 @@ func (s *Service) CreateUSBControlSet(ctx context.Context, req *CreateUSBControl
 }
 
 // GetUSBControlSet retrieves a USB control set by ID
-func (s *Service) GetUSBControlSet(ctx context.Context, id string) (*USBControlSet, *interfaces.Response, error) {
+func (s *Service) GetUSBControlSet(ctx context.Context, id string) (*USBControlSet, *resty.Response, error) {
 	if id == "" {
 		return nil, nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
-	}
-
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
 	}
 
 	vars := map[string]any{"id": id}
@@ -70,7 +64,11 @@ func (s *Service) GetUSBControlSet(ctx context.Context, id string) (*USBControlS
 		GetUSBControlSet *USBControlSet `json:"getUSBControlSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, getUSBControlSetQuery, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(getUSBControlSetQuery).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get USB control set: %w", err)
 	}
@@ -79,7 +77,7 @@ func (s *Service) GetUSBControlSet(ctx context.Context, id string) (*USBControlS
 }
 
 // UpdateUSBControlSet updates an existing USB control set
-func (s *Service) UpdateUSBControlSet(ctx context.Context, id string, req *UpdateUSBControlSetRequest) (*USBControlSet, *interfaces.Response, error) {
+func (s *Service) UpdateUSBControlSet(ctx context.Context, id string, req *UpdateUSBControlSetRequest) (*USBControlSet, *resty.Response, error) {
 	if id == "" {
 		return nil, nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
 	}
@@ -99,17 +97,16 @@ func (s *Service) UpdateUSBControlSet(ctx context.Context, id string, req *Updat
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := usbControlSetMutationVariables(req, id)
 	var result struct {
 		UpdateUSBControlSet *USBControlSet `json:"updateUSBControlSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, updateUSBControlSetMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(updateUSBControlSetMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to update USB control set: %w", err)
 	}
@@ -118,19 +115,17 @@ func (s *Service) UpdateUSBControlSet(ctx context.Context, id string, req *Updat
 }
 
 // DeleteUSBControlSet deletes a USB control set by ID
-func (s *Service) DeleteUSBControlSet(ctx context.Context, id string) (*interfaces.Response, error) {
+func (s *Service) DeleteUSBControlSet(ctx context.Context, id string) (*resty.Response, error) {
 	if id == "" {
 		return nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := map[string]any{"id": id}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, deleteUSBControlSetMutation, vars, nil, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(deleteUSBControlSetMutation).
+		SetVariables(vars).
+		Post(client.EndpointApp)
 	if err != nil {
 		return resp, fmt.Errorf("failed to delete USB control set: %w", err)
 	}
@@ -139,15 +134,10 @@ func (s *Service) DeleteUSBControlSet(ctx context.Context, id string) (*interfac
 }
 
 // ListUSBControlSets retrieves all USB control sets with automatic pagination
-func (s *Service) ListUSBControlSets(ctx context.Context) ([]USBControlSet, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListUSBControlSets(ctx context.Context) ([]USBControlSet, *resty.Response, error) {
 	allItems := make([]USBControlSet, 0)
 	var nextToken *string
-	var lastResp *interfaces.Response
+	var lastResp *resty.Response
 
 	for {
 		vars := map[string]any{
@@ -162,7 +152,11 @@ func (s *Service) ListUSBControlSets(ctx context.Context) ([]USBControlSet, *int
 			ListUSBControlSets *ListUSBControlSetsResponse `json:"listUSBControlSets"`
 		}
 
-		resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listUSBControlSetsQuery, vars, &result, headers)
+		resp, err := s.client.NewRequest(ctx).
+			SetQuery(listUSBControlSetsQuery).
+			SetVariables(vars).
+			SetTarget(&result).
+			Post(client.EndpointApp)
 		lastResp = resp
 		if err != nil {
 			return nil, lastResp, fmt.Errorf("failed to list USB control sets: %w", err)
@@ -183,17 +177,15 @@ func (s *Service) ListUSBControlSets(ctx context.Context) ([]USBControlSet, *int
 }
 
 // ListUSBControlSetNames retrieves only the names of all USB control sets
-func (s *Service) ListUSBControlSetNames(ctx context.Context) ([]string, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListUSBControlSetNames(ctx context.Context) ([]string, *resty.Response, error) {
 	var result struct {
 		ListUsbControlNames *ListUSBControlSetNamesResponse `json:"listUsbControlNames"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listUSBControlSetNamesQuery, nil, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(listUSBControlSetNamesQuery).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list USB control set names: %w", err)
 	}

@@ -5,21 +5,21 @@ import (
 	"fmt"
 
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/interfaces"
+	"resty.dev/v3"
 )
 
 // Service provides operations for Jamf Protect Exception Sets
 type Service struct {
-	client interfaces.GraphQLClient
+	client client.GraphQLClient
 }
 
 // NewService creates a new Exception Sets service
-func NewService(client interfaces.GraphQLClient) *Service {
-	return &Service{client: client}
+func NewService(c client.GraphQLClient) *Service {
+	return &Service{client: c}
 }
 
 // CreateExceptionSet creates a new exception set
-func (s *Service) CreateExceptionSet(ctx context.Context, req *CreateExceptionSetRequest) (*ExceptionSet, *interfaces.Response, error) {
+func (s *Service) CreateExceptionSet(ctx context.Context, req *CreateExceptionSetRequest) (*ExceptionSet, *resty.Response, error) {
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
 	}
@@ -30,17 +30,16 @@ func (s *Service) CreateExceptionSet(ctx context.Context, req *CreateExceptionSe
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := exceptionSetMutationVariables(req, "")
 	var result struct {
 		CreateExceptionSet *ExceptionSet `json:"createExceptionSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, createExceptionSetMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(createExceptionSetMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to create exception set: %w", err)
 	}
@@ -49,14 +48,9 @@ func (s *Service) CreateExceptionSet(ctx context.Context, req *CreateExceptionSe
 }
 
 // GetExceptionSet retrieves an exception set by UUID
-func (s *Service) GetExceptionSet(ctx context.Context, uuid string) (*ExceptionSet, *interfaces.Response, error) {
+func (s *Service) GetExceptionSet(ctx context.Context, uuid string) (*ExceptionSet, *resty.Response, error) {
 	if err := ValidateExceptionSetUUID(uuid); err != nil {
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
-	}
-
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
 	}
 
 	vars := map[string]any{
@@ -68,7 +62,11 @@ func (s *Service) GetExceptionSet(ctx context.Context, uuid string) (*ExceptionS
 		GetExceptionSet *ExceptionSet `json:"getExceptionSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, getExceptionSetQuery, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(getExceptionSetQuery).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get exception set: %w", err)
 	}
@@ -77,7 +75,7 @@ func (s *Service) GetExceptionSet(ctx context.Context, uuid string) (*ExceptionS
 }
 
 // UpdateExceptionSet updates an existing exception set
-func (s *Service) UpdateExceptionSet(ctx context.Context, uuid string, req *UpdateExceptionSetRequest) (*ExceptionSet, *interfaces.Response, error) {
+func (s *Service) UpdateExceptionSet(ctx context.Context, uuid string, req *UpdateExceptionSetRequest) (*ExceptionSet, *resty.Response, error) {
 	if err := ValidateExceptionSetUUID(uuid); err != nil {
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
@@ -91,17 +89,16 @@ func (s *Service) UpdateExceptionSet(ctx context.Context, uuid string, req *Upda
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := exceptionSetMutationVariables(req, uuid)
 	var result struct {
 		UpdateExceptionSet *ExceptionSet `json:"updateExceptionSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, updateExceptionSetMutation, vars, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(updateExceptionSetMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to update exception set: %w", err)
 	}
@@ -110,19 +107,17 @@ func (s *Service) UpdateExceptionSet(ctx context.Context, uuid string, req *Upda
 }
 
 // DeleteExceptionSet deletes an exception set by UUID
-func (s *Service) DeleteExceptionSet(ctx context.Context, uuid string) (*interfaces.Response, error) {
+func (s *Service) DeleteExceptionSet(ctx context.Context, uuid string) (*resty.Response, error) {
 	if err := ValidateExceptionSetUUID(uuid); err != nil {
 		return nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
 	vars := map[string]any{"uuid": uuid}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, deleteExceptionSetMutation, vars, nil, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(deleteExceptionSetMutation).
+		SetVariables(vars).
+		Post(client.EndpointApp)
 	if err != nil {
 		return resp, fmt.Errorf("failed to delete exception set: %w", err)
 	}
@@ -131,15 +126,10 @@ func (s *Service) DeleteExceptionSet(ctx context.Context, uuid string) (*interfa
 }
 
 // ListExceptionSets retrieves all exception sets with automatic pagination
-func (s *Service) ListExceptionSets(ctx context.Context) ([]ExceptionSetListItem, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListExceptionSets(ctx context.Context) ([]ExceptionSetListItem, *resty.Response, error) {
 	allItems := make([]ExceptionSetListItem, 0)
 	var nextToken *string
-	var lastResp *interfaces.Response
+	var lastResp *resty.Response
 
 	for {
 		vars := map[string]any{
@@ -154,7 +144,11 @@ func (s *Service) ListExceptionSets(ctx context.Context) ([]ExceptionSetListItem
 			ListExceptionSets *ListExceptionSetsResponse `json:"listExceptionSets"`
 		}
 
-		resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listExceptionSetsQuery, vars, &result, headers)
+		resp, err := s.client.NewRequest(ctx).
+			SetQuery(listExceptionSetsQuery).
+			SetVariables(vars).
+			SetTarget(&result).
+			Post(client.EndpointApp)
 		lastResp = resp
 		if err != nil {
 			return nil, lastResp, fmt.Errorf("failed to list exception sets: %w", err)
@@ -266,17 +260,15 @@ func buildEsExceptionInputVars(inputs []EsExceptionInput) []map[string]any {
 }
 
 // ListExceptionSetNames retrieves only the names of all exception sets
-func (s *Service) ListExceptionSetNames(ctx context.Context) ([]string, *interfaces.Response, error) {
-	headers := map[string]string{
-		"Accept":       client.AcceptJSON,
-		"Content-Type": client.ContentTypeJSON,
-	}
-
+func (s *Service) ListExceptionSetNames(ctx context.Context) ([]string, *resty.Response, error) {
 	var result struct {
 		ListExceptionSetNames *ListExceptionSetNamesResponse `json:"listExceptionSetNames"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listExceptionSetNamesQuery, nil, &result, headers)
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(listExceptionSetNamesQuery).
+		SetTarget(&result).
+		Post(client.EndpointApp)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list exception set names: %w", err)
 	}

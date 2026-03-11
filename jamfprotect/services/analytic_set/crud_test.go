@@ -2,51 +2,25 @@ package analyticset_test
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
 	analyticset "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic_set"
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic_set/mocks"
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testBaseURL = "https://test.jamfprotect.example.com"
-
 const testUUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
 
-func setupMockClient(t *testing.T) (*analyticset.Service, string) {
+func setupMockService(t *testing.T) (*analyticset.Service, *mocks.AnalyticSetMock) {
 	t.Helper()
-
-	httpClient := &http.Client{}
-	httpmock.ActivateNonDefault(httpClient)
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
-
-	httpmock.RegisterResponder("POST", testBaseURL+"/token",
-		httpmock.NewJsonResponderOrPanic(200, map[string]any{
-			"access_token": "mock-token",
-			"expires_in":   3600,
-			"token_type":   "Bearer",
-		}),
-	)
-
-	transport, err := client.NewTransport("test-client", "test-secret",
-		client.WithBaseURL(testBaseURL),
-		client.WithTransport(httpClient.Transport),
-	)
-	require.NoError(t, err)
-
-	return analyticset.NewService(transport), testBaseURL
+	mock := mocks.NewAnalyticSetMock()
+	return analyticset.NewService(mock), mock
 }
 
 func TestAnalyticSetService_CreateAnalyticSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticSetMock(baseURL)
-	mockHandler.RegisterCreateAnalyticSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterCreateAnalyticSetMock()
 
 	req := &analyticset.CreateAnalyticSetRequest{
 		Name:        "Test Analytic Set",
@@ -63,9 +37,8 @@ func TestAnalyticSetService_CreateAnalyticSet(t *testing.T) {
 }
 
 func TestAnalyticSetService_GetAnalyticSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticSetMock(baseURL)
-	mockHandler.RegisterGetAnalyticSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterGetAnalyticSetMock()
 
 	result, _, err := service.GetAnalyticSet(context.Background(), testUUID)
 
@@ -76,9 +49,8 @@ func TestAnalyticSetService_GetAnalyticSet(t *testing.T) {
 }
 
 func TestAnalyticSetService_UpdateAnalyticSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticSetMock(baseURL)
-	mockHandler.RegisterUpdateAnalyticSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterUpdateAnalyticSetMock()
 
 	req := &analyticset.UpdateAnalyticSetRequest{
 		Name:        "Updated Analytic Set",
@@ -95,9 +67,8 @@ func TestAnalyticSetService_UpdateAnalyticSet(t *testing.T) {
 }
 
 func TestAnalyticSetService_DeleteAnalyticSet(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticSetMock(baseURL)
-	mockHandler.RegisterDeleteAnalyticSetMock()
+	service, mock := setupMockService(t)
+	mock.RegisterDeleteAnalyticSetMock()
 
 	_, err := service.DeleteAnalyticSet(context.Background(), testUUID)
 
@@ -105,9 +76,8 @@ func TestAnalyticSetService_DeleteAnalyticSet(t *testing.T) {
 }
 
 func TestAnalyticSetService_ListAnalyticSets(t *testing.T) {
-	service, baseURL := setupMockClient(t)
-	mockHandler := mocks.NewAnalyticSetMock(baseURL)
-	mockHandler.RegisterListAnalyticSetsMock()
+	service, mock := setupMockService(t)
+	mock.RegisterListAnalyticSetsMock()
 
 	result, _, err := service.ListAnalyticSets(context.Background())
 
@@ -117,7 +87,7 @@ func TestAnalyticSetService_ListAnalyticSets(t *testing.T) {
 }
 
 func TestAnalyticSetService_ValidationErrors(t *testing.T) {
-	service, _ := setupMockClient(t)
+	service, _ := setupMockService(t)
 
 	tests := []struct {
 		name    string

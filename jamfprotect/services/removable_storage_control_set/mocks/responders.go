@@ -1,24 +1,27 @@
 package mocks
 
 import (
-	"net/http"
-
-	"github.com/jarcoal/httpmock"
+	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
+	coremocks "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/mocks"
 )
 
 // USBControlSetMock provides mock responses for the RemovableStorageControlSet service GraphQL operations.
 // All operations POST to the /app GraphQL endpoint and are distinguished by operation name
 // in the request body.
 type USBControlSetMock struct {
-	baseURL string
+	*coremocks.GenericGraphQLMock
 }
 
-// NewUSBControlSetMock creates a new USBControlSetMock instance
-func NewUSBControlSetMock(baseURL string) *USBControlSetMock {
-	return &USBControlSetMock{baseURL: baseURL}
+// NewUSBControlSetMock creates a new USBControlSetMock instance.
+func NewUSBControlSetMock() *USBControlSetMock {
+	return &USBControlSetMock{
+		GenericGraphQLMock: coremocks.NewGenericGraphQLMock(coremocks.GenericGraphQLMockConfig{
+			Name: "USBControlSetMock",
+		}),
+	}
 }
 
-// RegisterMocks registers all successful response mocks for USB control set operations
+// RegisterMocks registers all successful response mocks for USB control set operations.
 func (m *USBControlSetMock) RegisterMocks() {
 	m.RegisterCreateUSBControlSetMock()
 	m.RegisterGetUSBControlSetMock()
@@ -28,183 +31,48 @@ func (m *USBControlSetMock) RegisterMocks() {
 	m.RegisterListUSBControlSetNamesMock()
 }
 
-// RegisterErrorMocks registers error response mocks
+// RegisterErrorMocks registers error response mocks.
 func (m *USBControlSetMock) RegisterErrorMocks() {
-	m.RegisterUnauthorizedErrorMock()
 	m.RegisterNotFoundErrorMock()
+	m.RegisterUnauthorizedErrorMock()
 }
 
-// RegisterCreateUSBControlSetMock registers a success mock for createUSBControlSet
+// RegisterCreateUSBControlSetMock registers a success mock for createUSBControlSet.
 func (m *USBControlSetMock) RegisterCreateUSBControlSetMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("createUSBControlSet"),
-		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"createUSBControlSet": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Test USB Control Set",
-						"description": "A test USB control set",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "createUSBControlSet", 200, "create_usb_control_set_success.json")
 }
 
-// RegisterGetUSBControlSetMock registers a success mock for getUSBControlSet
+// RegisterGetUSBControlSetMock registers a success mock for getUSBControlSet.
 func (m *USBControlSetMock) RegisterGetUSBControlSetMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("getUSBControlSet"),
-		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getUSBControlSet": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Test USB Control Set",
-						"description": "A test USB control set",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "getUSBControlSet", 200, "get_usb_control_set_success.json")
 }
 
-// RegisterUpdateUSBControlSetMock registers a success mock for updateUSBControlSet
+// RegisterUpdateUSBControlSetMock registers a success mock for updateUSBControlSet.
 func (m *USBControlSetMock) RegisterUpdateUSBControlSetMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("updateUSBControlSet"),
-		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"updateUSBControlSet": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Updated USB Control Set",
-						"description": "An updated USB control set",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-02T00:00:00Z",
-					},
-				},
-			})
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "updateUSBControlSet", 200, "update_usb_control_set_success.json")
 }
 
-// RegisterDeleteUSBControlSetMock registers a success mock for deleteUSBControlSet
+// RegisterDeleteUSBControlSetMock registers a success mock for deleteUSBControlSet.
 func (m *USBControlSetMock) RegisterDeleteUSBControlSetMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("deleteUSBControlSet"),
-		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"deleteUSBControlSet": map[string]any{
-						"id": "test-id-1234",
-					},
-				},
-			})
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "deleteUSBControlSet", 200, "delete_usb_control_set_success.json")
 }
 
-// RegisterListUSBControlSetsMock registers a success mock for listUSBControlSets
+// RegisterListUSBControlSetsMock registers a success mock for listUSBControlSets.
 func (m *USBControlSetMock) RegisterListUSBControlSetsMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("listUSBControlSets"),
-		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listUSBControlSets": map[string]any{
-						"items": []map[string]any{
-							{
-								"id":          "test-id-1234",
-								"name":        "Test USB Control Set",
-								"description": "A test USB control set",
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "listUSBControlSets", 200, "list_usb_control_sets_success.json")
 }
 
-// RegisterListUSBControlSetNamesMock registers a success mock for listUsbControlNames
+// RegisterListUSBControlSetNamesMock registers a success mock for listUsbControlNames.
 func (m *USBControlSetMock) RegisterListUSBControlSetNamesMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("listUsbControlNames"),
-		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listUsbControlNames": map[string]any{
-						"items": []map[string]any{
-							{"name": "Test USB Control Set"},
-						},
-					},
-				},
-			})
-			return resp, nil
-		},
-	)
+	m.Register(client.EndpointApp, "listUsbControlNames", 200, "list_usb_control_set_names_success.json")
 }
 
-// RegisterUnauthorizedErrorMock registers a 401 unauthorized error mock
-func (m *USBControlSetMock) RegisterUnauthorizedErrorMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("getUSBControlSet"),
-		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(401, map[string]any{
-				"errors": []map[string]any{
-					{"message": "Unauthorized"},
-				},
-			})
-			return resp, nil
-		},
-	)
-}
-
-// RegisterNotFoundErrorMock registers a not-found error mock
+// RegisterNotFoundErrorMock registers a not-found error mock.
 func (m *USBControlSetMock) RegisterNotFoundErrorMock() {
-	httpmock.RegisterMatcherResponder(
-		"POST",
-		m.baseURL+"/app",
-		httpmock.BodyContainsString("getUSBControlSet"),
-		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getUSBControlSet": nil,
-				},
-				"errors": []map[string]any{
-					{"message": "USB control set not found"},
-				},
-			})
-			return resp, nil
-		},
-	)
+	m.RegisterError(client.EndpointApp, "getUSBControlSet", 200, "error_not_found.json", "graphql operation failed: USBControlSet not found")
+}
+
+// RegisterUnauthorizedErrorMock registers a 401 unauthorized error mock.
+func (m *USBControlSetMock) RegisterUnauthorizedErrorMock() {
+	m.RegisterError(client.EndpointApp, "getUSBControlSet", 401, "error_unauthorized.json", "Jamf Protect API error: unauthorized")
 }
