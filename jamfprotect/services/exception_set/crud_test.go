@@ -128,6 +128,30 @@ func TestExceptionSetService_ValidationErrors(t *testing.T) {
 			wantErr: "uuid is required",
 		},
 		{
+			name: "UpdateExceptionSet empty uuid",
+			fn: func() error {
+				_, _, err := service.UpdateExceptionSet(context.Background(), "", &exceptionset.UpdateExceptionSetRequest{Name: "test"})
+				return err
+			},
+			wantErr: "uuid is required",
+		},
+		{
+			name: "UpdateExceptionSet nil request",
+			fn: func() error {
+				_, _, err := service.UpdateExceptionSet(context.Background(), testUUID, nil)
+				return err
+			},
+			wantErr: "request cannot be nil",
+		},
+		{
+			name: "UpdateExceptionSet missing name",
+			fn: func() error {
+				_, _, err := service.UpdateExceptionSet(context.Background(), testUUID, &exceptionset.UpdateExceptionSetRequest{})
+				return err
+			},
+			wantErr: "name is required",
+		},
+		{
 			name: "DeleteExceptionSet empty uuid",
 			fn: func() error {
 				_, err := service.DeleteExceptionSet(context.Background(), "")
@@ -144,4 +168,184 @@ func TestExceptionSetService_ValidationErrors(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.wantErr)
 		})
 	}
+}
+
+func TestExceptionSetService_CreateWithExceptions(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterCreateExceptionSetMock()
+
+	req := &exceptionset.CreateExceptionSetRequest{
+		Name:        "Test with Exceptions",
+		Description: "Exception set with various exception types",
+		Exceptions: []exceptionset.ExceptionInput{
+			{
+				Type:           "Path",
+				Value:          "/usr/bin/test",
+				IgnoreActivity: "Analytics",
+			},
+			{
+				Type:  "AppSigningInfo",
+				Value: "com.example.app",
+				AppSigningInfo: &exceptionset.AppSigningInfoInput{
+					AppId:  "app123",
+					TeamId: "team456",
+				},
+				IgnoreActivity: "ThreatPrevention",
+				AnalyticTypes:  []string{"MALWARE", "SUSPICIOUS"},
+			},
+			{
+				Type:           "TeamId",
+				Value:          "signing-id",
+				IgnoreActivity: "Telemetry",
+				AnalyticUuid:   "analytic-uuid-123",
+				AnalyticTypes:  []string{"MALWARE"},
+			},
+		},
+	}
+
+	result, _, err := service.CreateExceptionSet(context.Background(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+}
+
+func TestExceptionSetService_CreateWithEsExceptions(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterCreateExceptionSetMock()
+
+	req := &exceptionset.CreateExceptionSetRequest{
+		Name:        "Test with ES Exceptions",
+		Description: "Exception set with ES exception types",
+		EsExceptions: []exceptionset.EsExceptionInput{
+			{
+				Type:           "Path",
+				Value:          "/usr/bin/test",
+				IgnoreActivity: "TelemetryV2",
+			},
+			{
+				Type:  "AppSigningInfo",
+				Value: "com.example.app",
+				AppSigningInfo: &exceptionset.AppSigningInfoInput{
+					AppId:  "app123",
+					TeamId: "team456",
+				},
+				IgnoreActivity:    "ThreatPrevention",
+				IgnoreListType:    "ALLOW",
+				IgnoreListSubType: "PROCESS",
+				EventType:         "ES_EVENT_TYPE_AUTH_EXEC",
+			},
+		},
+	}
+
+	result, _, err := service.CreateExceptionSet(context.Background(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+}
+
+func TestExceptionSetService_UpdateWithExceptions(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterUpdateExceptionSetMock()
+
+	req := &exceptionset.UpdateExceptionSetRequest{
+		Name:        "Updated with Exceptions",
+		Description: "Updated exception set",
+		Exceptions: []exceptionset.ExceptionInput{
+			{
+				Type:           "Path",
+				Value:          "/usr/bin/updated",
+				IgnoreActivity: "Analytics",
+				AppSigningInfo: &exceptionset.AppSigningInfoInput{
+					AppId:  "updated-app",
+					TeamId: "updated-team",
+				},
+				AnalyticTypes: []string{"SUSPICIOUS"},
+				AnalyticUuid:  "updated-uuid",
+			},
+		},
+		EsExceptions: []exceptionset.EsExceptionInput{
+			{
+				Type:              "Executable",
+				Value:             "/usr/bin/es-updated",
+				IgnoreActivity:    "Telemetry",
+				IgnoreListType:    "DENY",
+				IgnoreListSubType: "FILE",
+				EventType:         "ES_EVENT_TYPE_AUTH_OPEN",
+			},
+		},
+	}
+
+	result, _, err := service.UpdateExceptionSet(context.Background(), testUUID, req)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+}
+
+func TestExceptionSetService_Validators(t *testing.T) {
+	assert.NoError(t, exceptionset.ValidateExceptionSetID("test-id"))
+	assert.NoError(t, exceptionset.ValidateExceptionSetID(""))
+
+	validUUID := "550e8400-e29b-41d4-a716-446655440000"
+	assert.NoError(t, exceptionset.ValidateExceptionSetUUID(validUUID))
+	assert.Error(t, exceptionset.ValidateExceptionSetUUID(""))
+	assert.Error(t, exceptionset.ValidateExceptionSetUUID("not-a-uuid"))
+
+	assert.NoError(t, exceptionset.ValidateExceptionType("User"))
+	assert.NoError(t, exceptionset.ValidateExceptionType("Path"))
+	assert.Error(t, exceptionset.ValidateExceptionType("INVALID"))
+
+	assert.NoError(t, exceptionset.ValidateIgnoreActivity("Analytics"))
+	assert.NoError(t, exceptionset.ValidateIgnoreActivity("ThreatPrevention"))
+	assert.Error(t, exceptionset.ValidateIgnoreActivity("INVALID"))
+
+	assert.NoError(t, exceptionset.ValidateExceptionInput(exceptionset.ExceptionInput{
+		Type:           "Path",
+		Value:          "/test",
+		IgnoreActivity: "Analytics",
+	}))
+	assert.Error(t, exceptionset.ValidateExceptionInput(exceptionset.ExceptionInput{
+		Type:           "INVALID",
+		Value:          "/test",
+		IgnoreActivity: "Analytics",
+	}))
+
+	assert.NoError(t, exceptionset.ValidateEsExceptionInput(exceptionset.EsExceptionInput{
+		Type:           "Path",
+		Value:          "/test",
+		IgnoreActivity: "Telemetry",
+	}))
+	assert.Error(t, exceptionset.ValidateEsExceptionInput(exceptionset.EsExceptionInput{
+		Type:           "Path",
+		Value:          "/test",
+		IgnoreActivity: "INVALID",
+	}))
+
+	assert.NoError(t, exceptionset.ValidateCreateExceptionSetRequest(&exceptionset.CreateExceptionSetRequest{
+		Name: "test",
+		Exceptions: []exceptionset.ExceptionInput{
+			{Type: "Path", Value: "/test", IgnoreActivity: "Analytics"},
+		},
+		EsExceptions: []exceptionset.EsExceptionInput{
+			{Type: "Path", Value: "/test", IgnoreActivity: "Telemetry"},
+		},
+	}))
+	assert.NoError(t, exceptionset.ValidateCreateExceptionSetRequest(nil))
+	assert.Error(t, exceptionset.ValidateCreateExceptionSetRequest(&exceptionset.CreateExceptionSetRequest{
+		Exceptions: []exceptionset.ExceptionInput{
+			{Type: "INVALID", Value: "/test", IgnoreActivity: "Analytics"},
+		},
+	}))
+
+	assert.NoError(t, exceptionset.ValidateUpdateExceptionSetRequest(&exceptionset.UpdateExceptionSetRequest{
+		Name: "test",
+		Exceptions: []exceptionset.ExceptionInput{
+			{Type: "Path", Value: "/test", IgnoreActivity: "Analytics"},
+		},
+	}))
+	assert.NoError(t, exceptionset.ValidateUpdateExceptionSetRequest(nil))
+	assert.Error(t, exceptionset.ValidateUpdateExceptionSetRequest(&exceptionset.UpdateExceptionSetRequest{
+		EsExceptions: []exceptionset.EsExceptionInput{
+			{Type: "Path", Value: "/test", IgnoreActivity: "INVALID"},
+		},
+	}))
 }

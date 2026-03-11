@@ -153,6 +153,71 @@ func TestAnalyticService_ListAnalyticsFilterOptions(t *testing.T) {
 	assert.Equal(t, "Security", result.Categories[0].Value)
 }
 
+func TestAnalyticService_ListAnalytics_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listAnalytics", 200, "list_analytics_empty.json")
+
+	result, _, err := service.ListAnalytics(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestAnalyticService_ListAnalyticsLite_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listAnalyticsLite", 200, "list_analytics_empty.json")
+
+	result, _, err := service.ListAnalyticsLite(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestAnalyticService_ListAnalyticsNames_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listAnalyticsNames", 200, "list_analytics_empty.json")
+
+	result, _, err := service.ListAnalyticsNames(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestAnalyticService_ListAnalyticsCategories_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listAnalyticsCategories", 200, "list_analytics_categories_empty.json")
+
+	result, _, err := service.ListAnalyticsCategories(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestAnalyticService_ListAnalyticsTags_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listAnalyticsTags", 200, "list_analytics_tags_empty.json")
+
+	result, _, err := service.ListAnalyticsTags(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestAnalyticService_ListAnalyticsFilterOptions_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listAnalyticsFilterOptions", 200, "list_analytics_filter_options_empty.json")
+
+	result, _, err := service.ListAnalyticsFilterOptions(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+}
+
 func TestAnalyticService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 
@@ -202,6 +267,54 @@ func TestAnalyticService_ValidationErrors(t *testing.T) {
 			},
 			wantErr: "filter is required",
 		},
+		{
+			name: "GetAnalytic empty uuid",
+			fn: func() error {
+				_, _, err := service.GetAnalytic(context.Background(), "")
+				return err
+			},
+			wantErr: "uuid is required",
+		},
+		{
+			name: "GetAnalytic invalid uuid",
+			fn: func() error {
+				_, _, err := service.GetAnalytic(context.Background(), "not-a-uuid")
+				return err
+			},
+			wantErr: "uuid must be a valid UUID",
+		},
+		{
+			name: "UpdateAnalytic empty uuid",
+			fn: func() error {
+				_, _, err := service.UpdateAnalytic(context.Background(), "", &analytic.UpdateAnalyticRequest{})
+				return err
+			},
+			wantErr: "uuid is required",
+		},
+		{
+			name: "UpdateAnalytic invalid uuid",
+			fn: func() error {
+				_, _, err := service.UpdateAnalytic(context.Background(), "not-a-uuid", &analytic.UpdateAnalyticRequest{})
+				return err
+			},
+			wantErr: "uuid must be a valid UUID",
+		},
+		{
+			name: "DeleteAnalytic empty uuid",
+			fn: func() error {
+				_, err := service.DeleteAnalytic(context.Background(), "")
+				return err
+			},
+			wantErr: "uuid is required",
+		},
+		{
+			name: "DeleteAnalytic invalid uuid",
+			fn: func() error {
+				_, err := service.DeleteAnalytic(context.Background(), "not-a-uuid")
+				return err
+			},
+			wantErr: "uuid must be a valid UUID",
+		},
 	}
 
 	for _, tt := range tests {
@@ -211,4 +324,68 @@ func TestAnalyticService_ValidationErrors(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.wantErr)
 		})
 	}
+}
+
+func TestAnalyticService_Validators(t *testing.T) {
+	validUUID := "550e8400-e29b-41d4-a716-446655440000"
+	assert.NoError(t, analytic.ValidateAnalyticID(validUUID))
+	assert.Error(t, analytic.ValidateAnalyticID(""))
+	assert.Error(t, analytic.ValidateAnalyticID("not-a-uuid"))
+
+	assert.NoError(t, analytic.ValidateInputType("GPFSEvent"))
+	assert.NoError(t, analytic.ValidateInputType("GPProcessEvent"))
+	assert.NoError(t, analytic.ValidateInputType("GPGatekeeperEvent"))
+	assert.Error(t, analytic.ValidateInputType("INVALID"))
+
+	assert.NoError(t, analytic.ValidateLevel(0))
+	assert.NoError(t, analytic.ValidateLevel(5))
+	assert.NoError(t, analytic.ValidateLevel(10))
+	assert.Error(t, analytic.ValidateLevel(-1))
+	assert.Error(t, analytic.ValidateLevel(11))
+
+	assert.NoError(t, analytic.ValidateSeverity("High"))
+	assert.NoError(t, analytic.ValidateSeverity("Medium"))
+	assert.NoError(t, analytic.ValidateSeverity("Low"))
+	assert.NoError(t, analytic.ValidateSeverity("Informational"))
+	assert.Error(t, analytic.ValidateSeverity("INVALID"))
+
+	severity := "High"
+	invalidSeverity := "INVALID"
+	assert.NoError(t, analytic.ValidateCreateAnalyticRequest(&analytic.CreateAnalyticRequest{
+		InputType: "GPFSEvent",
+		Level:     5,
+		Severity:  "High",
+	}))
+	assert.NoError(t, analytic.ValidateCreateAnalyticRequest(nil))
+	assert.Error(t, analytic.ValidateCreateAnalyticRequest(&analytic.CreateAnalyticRequest{
+		InputType: "INVALID",
+		Level:     5,
+		Severity:  "High",
+	}))
+	assert.Error(t, analytic.ValidateCreateAnalyticRequest(&analytic.CreateAnalyticRequest{
+		InputType: "GPFSEvent",
+		Level:     11,
+		Severity:  "High",
+	}))
+	assert.Error(t, analytic.ValidateCreateAnalyticRequest(&analytic.CreateAnalyticRequest{
+		InputType: "GPFSEvent",
+		Level:     5,
+		Severity:  "INVALID",
+	}))
+
+	assert.NoError(t, analytic.ValidateUpdateAnalyticRequest(&analytic.UpdateAnalyticRequest{
+		InputType: "GPFSEvent",
+		Level:     5,
+		Severity:  &severity,
+	}))
+	assert.NoError(t, analytic.ValidateUpdateAnalyticRequest(nil))
+	assert.Error(t, analytic.ValidateUpdateAnalyticRequest(&analytic.UpdateAnalyticRequest{
+		InputType: "INVALID",
+	}))
+	assert.Error(t, analytic.ValidateUpdateAnalyticRequest(&analytic.UpdateAnalyticRequest{
+		Level: 11,
+	}))
+	assert.Error(t, analytic.ValidateUpdateAnalyticRequest(&analytic.UpdateAnalyticRequest{
+		Severity: &invalidSeverity,
+	}))
 }

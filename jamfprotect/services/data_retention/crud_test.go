@@ -47,6 +47,60 @@ func TestDataRetentionService_UpdateDataRetention(t *testing.T) {
 	assert.Equal(t, int64(180), result.Database.Alert.NumberOfDays)
 }
 
+func TestDataRetentionService_GetDataRetention_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "getDataRetention", 200, "get_data_retention_empty.json")
+
+	result, _, err := service.GetDataRetention(context.Background())
+
+	require.NoError(t, err)
+	assert.Nil(t, result)
+}
+
+func TestDataRetentionService_UpdateDataRetention_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/app", "updateOrganizationRetention", 200, "update_data_retention_empty.json")
+
+	req := &dataretention.UpdateDataRetentionRequest{
+		DatabaseLogDays:   30,
+		DatabaseAlertDays: 180,
+		ColdAlertDays:     365,
+	}
+
+	result, _, err := service.UpdateDataRetention(context.Background(), req)
+
+	require.NoError(t, err)
+	assert.Nil(t, result)
+}
+
+func TestDataRetentionService_GetDataRetention_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "getDataRetention", 500, "", "Internal Server Error")
+
+	result, _, err := service.GetDataRetention(context.Background())
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to get data retention")
+}
+
+func TestDataRetentionService_UpdateDataRetention_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/app", "updateOrganizationRetention", 500, "", "Internal Server Error")
+
+	req := &dataretention.UpdateDataRetentionRequest{
+		DatabaseLogDays:   30,
+		DatabaseAlertDays: 180,
+		ColdAlertDays:     365,
+	}
+
+	result, _, err := service.UpdateDataRetention(context.Background(), req)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to update data retention")
+}
+
 func TestDataRetentionService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 

@@ -101,6 +101,27 @@ func TestTelemetryService_ListTelemetriesCombined(t *testing.T) {
 	assert.Equal(t, "Test Telemetry V2", result.TelemetriesV2[0].Name)
 }
 
+func TestTelemetryService_ListTelemetriesV2_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/app", "listTelemetriesV2", 200, "list_telemetries_v2_empty.json")
+
+	result, _, err := service.ListTelemetriesV2(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestTelemetryService_ListTelemetriesV2_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/app", "listTelemetriesV2", 500, "", "Internal Server Error")
+
+	result, _, err := service.ListTelemetriesV2(context.Background())
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+}
+
 func TestTelemetryService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 
@@ -146,6 +167,34 @@ func TestTelemetryService_ValidationErrors(t *testing.T) {
 			wantErr: "id is required",
 		},
 		{
+			name: "UpdateTelemetryV2 nil request",
+			fn: func() error {
+				_, _, err := service.UpdateTelemetryV2(context.Background(), "test-id", nil)
+				return err
+			},
+			wantErr: "request cannot be nil",
+		},
+		{
+			name: "UpdateTelemetryV2 missing name",
+			fn: func() error {
+				_, _, err := service.UpdateTelemetryV2(context.Background(), "test-id", &telemetry.UpdateTelemetryV2Request{
+					LogFiles: []string{},
+				})
+				return err
+			},
+			wantErr: "name is required",
+		},
+		{
+			name: "UpdateTelemetryV2 nil logFiles",
+			fn: func() error {
+				_, _, err := service.UpdateTelemetryV2(context.Background(), "test-id", &telemetry.UpdateTelemetryV2Request{
+					Name: "test",
+				})
+				return err
+			},
+			wantErr: "logFiles is required",
+		},
+		{
 			name: "UpdateTelemetryV2 empty id",
 			fn: func() error {
 				_, _, err := service.UpdateTelemetryV2(context.Background(), "", &telemetry.UpdateTelemetryV2Request{
@@ -181,4 +230,15 @@ func TestTelemetryService_ValidationErrors(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.wantErr)
 		})
 	}
+}
+
+func TestTelemetryService_Validators(t *testing.T) {
+	assert.NoError(t, telemetry.ValidateTelemetryV2ID("test-id"))
+	assert.NoError(t, telemetry.ValidateTelemetryV2ID(""))
+
+	assert.NoError(t, telemetry.ValidateCreateTelemetryV2Request(&telemetry.CreateTelemetryV2Request{}))
+	assert.NoError(t, telemetry.ValidateCreateTelemetryV2Request(nil))
+
+	assert.NoError(t, telemetry.ValidateUpdateTelemetryV2Request(&telemetry.UpdateTelemetryV2Request{}))
+	assert.NoError(t, telemetry.ValidateUpdateTelemetryV2Request(nil))
 }

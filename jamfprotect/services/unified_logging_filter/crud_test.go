@@ -100,6 +100,28 @@ func TestUnifiedLoggingFilterService_ListUnifiedLoggingFilterNames(t *testing.T)
 	assert.Equal(t, "Test Unified Logging Filter", result[0])
 }
 
+func TestUnifiedLoggingFilterService_ListUnifiedLoggingFilters_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listUnifiedLoggingFilters", 200, "list_unified_logging_filters_empty.json")
+
+	result, _, err := service.ListUnifiedLoggingFilters(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestUnifiedLoggingFilterService_ListUnifiedLoggingFilterNames_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listUnifiedLoggingFilterNames", 200, "list_unified_logging_filter_names_empty.json")
+
+	result, _, err := service.ListUnifiedLoggingFilterNames(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
 func TestUnifiedLoggingFilterService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 
@@ -164,6 +186,26 @@ func TestUnifiedLoggingFilterService_ValidationErrors(t *testing.T) {
 			wantErr: "request cannot be nil",
 		},
 		{
+			name: "UpdateUnifiedLoggingFilter missing name",
+			fn: func() error {
+				_, _, err := service.UpdateUnifiedLoggingFilter(context.Background(), testUUID, &unifiedloggingfilter.UpdateUnifiedLoggingFilterRequest{
+					Filter: "test",
+				})
+				return err
+			},
+			wantErr: "name is required",
+		},
+		{
+			name: "UpdateUnifiedLoggingFilter missing filter",
+			fn: func() error {
+				_, _, err := service.UpdateUnifiedLoggingFilter(context.Background(), testUUID, &unifiedloggingfilter.UpdateUnifiedLoggingFilterRequest{
+					Name: "test",
+				})
+				return err
+			},
+			wantErr: "filter is required",
+		},
+		{
 			name: "DeleteUnifiedLoggingFilter empty uuid",
 			fn: func() error {
 				_, err := service.DeleteUnifiedLoggingFilter(context.Background(), "")
@@ -180,4 +222,19 @@ func TestUnifiedLoggingFilterService_ValidationErrors(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.wantErr)
 		})
 	}
+}
+
+func TestUnifiedLoggingFilterService_Validators(t *testing.T) {
+	assert.NoError(t, unifiedloggingfilter.ValidateCreateUnifiedLoggingFilterRequest(&unifiedloggingfilter.CreateUnifiedLoggingFilterRequest{}))
+	assert.NoError(t, unifiedloggingfilter.ValidateCreateUnifiedLoggingFilterRequest(nil))
+
+	assert.NoError(t, unifiedloggingfilter.ValidateUpdateUnifiedLoggingFilterRequest(&unifiedloggingfilter.UpdateUnifiedLoggingFilterRequest{}))
+	assert.NoError(t, unifiedloggingfilter.ValidateUpdateUnifiedLoggingFilterRequest(nil))
+
+	validUUID := "550e8400-e29b-41d4-a716-446655440000"
+	assert.NoError(t, unifiedloggingfilter.ValidateUnifiedLoggingFilterUUID(validUUID))
+
+	assert.Error(t, unifiedloggingfilter.ValidateUnifiedLoggingFilterUUID(""))
+	assert.Error(t, unifiedloggingfilter.ValidateUnifiedLoggingFilterUUID("not-a-uuid"))
+	assert.Error(t, unifiedloggingfilter.ValidateUnifiedLoggingFilterUUID("550e8400"))
 }

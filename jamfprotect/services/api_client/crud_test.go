@@ -86,6 +86,80 @@ func TestApiClientService_ListApiClients(t *testing.T) {
 	assert.Equal(t, "Test API Client", result[0].Name)
 }
 
+func TestApiClientService_ListApiClients_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listApiClients", 200, "list_api_clients_empty.json")
+
+	result, _, err := service.ListApiClients(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestApiClientService_CreateApiClient_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "createApiClient", 500, "", "Internal Server Error")
+
+	req := &apiclient.CreateApiClientRequest{
+		Name:    "test",
+		RoleIDs: []string{"role-1"},
+	}
+
+	result, _, err := service.CreateApiClient(context.Background(), req)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to create api client")
+}
+
+func TestApiClientService_GetApiClient_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "getApiClient", 500, "", "Internal Server Error")
+
+	result, _, err := service.GetApiClient(context.Background(), "test-id")
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to get api client")
+}
+
+func TestApiClientService_UpdateApiClient_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "updateApiClient", 500, "", "Internal Server Error")
+
+	req := &apiclient.UpdateApiClientRequest{
+		Name:    "test",
+		RoleIDs: []string{"role-1"},
+	}
+
+	result, _, err := service.UpdateApiClient(context.Background(), "test-id", req)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to update api client")
+}
+
+func TestApiClientService_DeleteApiClient_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "deleteApiClient", 500, "", "Internal Server Error")
+
+	_, err := service.DeleteApiClient(context.Background(), "test-id")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to delete api client")
+}
+
+func TestApiClientService_ListApiClients_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "listApiClients", 500, "", "Internal Server Error")
+
+	result, _, err := service.ListApiClients(context.Background())
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+}
+
 func TestApiClientService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 

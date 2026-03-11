@@ -127,6 +127,100 @@ func TestPlanService_GetPlanConfigurationAndSetOptions(t *testing.T) {
 	assert.Equal(t, "mas-uuid-1", result.ManagedAnalyticSets[0].UUID)
 }
 
+func TestPlanService_ListPlans_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/app", "listPlans", 200, "list_plans_empty.json")
+
+	result, _, err := service.ListPlans(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestPlanService_ListPlanNames_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/app", "listPlanNames", 200, "list_plans_empty.json")
+
+	result, _, err := service.ListPlanNames(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestPlanService_CreatePlan_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/app", "createPlan", 500, "", "Internal Server Error")
+
+	req := &plan.CreatePlanRequest{
+		Name:            "test",
+		ActionConfigs:   "action-1",
+		CommsConfig:     plan.CommsConfigInput{Protocol: "mqtt"},
+		SignaturesFeedConfig: plan.SignaturesFeedConfigInput{Mode: "blocking"},
+	}
+
+	result, _, err := service.CreatePlan(context.Background(), req)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to create plan")
+}
+
+func TestPlanService_GetPlan_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/app", "getPlan", 500, "", "Internal Server Error")
+
+	result, _, err := service.GetPlan(context.Background(), "test-id")
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to get plan")
+}
+
+func TestPlanService_UpdatePlan_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/app", "updatePlan", 500, "", "Internal Server Error")
+
+	req := &plan.UpdatePlanRequest{}
+
+	result, _, err := service.UpdatePlan(context.Background(), "test-id", req)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to update plan")
+}
+
+func TestPlanService_DeletePlan_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/app", "deletePlan", 500, "", "Internal Server Error")
+
+	_, err := service.DeletePlan(context.Background(), "test-id")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to delete plan")
+}
+
+func TestPlanService_ListPlans_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/app", "listPlans", 500, "", "Internal Server Error")
+
+	result, _, err := service.ListPlans(context.Background())
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestPlanService_ListPlanNames_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/app", "listPlanNames", 500, "", "Internal Server Error")
+
+	result, _, err := service.ListPlanNames(context.Background())
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+}
+
 func TestPlanService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 
@@ -174,6 +268,45 @@ func TestPlanService_ValidationErrors(t *testing.T) {
 			wantErr: "id is required",
 		},
 		{
+			name: "UpdatePlan empty id",
+			fn: func() error {
+				_, _, err := service.UpdatePlan(context.Background(), "", &plan.UpdatePlanRequest{})
+				return err
+			},
+			wantErr: "id is required",
+		},
+		{
+			name: "UpdatePlan invalid log level",
+			fn: func() error {
+				invalidLogLevel := "INVALID"
+				_, _, err := service.UpdatePlan(context.Background(), "test-id", &plan.UpdatePlanRequest{
+					LogLevel: &invalidLogLevel,
+				})
+				return err
+			},
+			wantErr: "logLevel must be one of",
+		},
+		{
+			name: "UpdatePlan invalid protocol",
+			fn: func() error {
+				_, _, err := service.UpdatePlan(context.Background(), "test-id", &plan.UpdatePlanRequest{
+					CommsConfig: plan.CommsConfigInput{Protocol: "INVALID"},
+				})
+				return err
+			},
+			wantErr: "commsConfig.protocol must be one of",
+		},
+		{
+			name: "UpdatePlan invalid signatures feed mode",
+			fn: func() error {
+				_, _, err := service.UpdatePlan(context.Background(), "test-id", &plan.UpdatePlanRequest{
+					SignaturesFeedConfig: plan.SignaturesFeedConfigInput{Mode: "INVALID"},
+				})
+				return err
+			},
+			wantErr: "signaturesFeedConfig.mode must be one of",
+		},
+		{
 			name: "DeletePlan empty id",
 			fn: func() error {
 				_, err := service.DeletePlan(context.Background(), "")
@@ -198,4 +331,74 @@ func TestPlanService_ValidationErrors(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.wantErr)
 		})
 	}
+}
+
+func TestPlanService_Validators(t *testing.T) {
+	logLevelDebug := "DEBUG"
+	logLevelError := "ERROR"
+	logLevelInvalid := "INVALID"
+
+	assert.NoError(t, plan.ValidateLogLevel(&logLevelDebug))
+	assert.NoError(t, plan.ValidateLogLevel(&logLevelError))
+	assert.NoError(t, plan.ValidateLogLevel(nil))
+	assert.Error(t, plan.ValidateLogLevel(&logLevelInvalid))
+
+	assert.NoError(t, plan.ValidateCommsProtocol("mqtt"))
+	assert.NoError(t, plan.ValidateCommsProtocol("wss/mqtt"))
+	assert.NoError(t, plan.ValidateCommsProtocol(""))
+	assert.Error(t, plan.ValidateCommsProtocol("INVALID"))
+
+	assert.NoError(t, plan.ValidateSignaturesFeedMode("blocking"))
+	assert.NoError(t, plan.ValidateSignaturesFeedMode("reportOnly"))
+	assert.NoError(t, plan.ValidateSignaturesFeedMode("disabled"))
+	assert.NoError(t, plan.ValidateSignaturesFeedMode(""))
+	assert.Error(t, plan.ValidateSignaturesFeedMode("INVALID"))
+
+	assert.NoError(t, plan.ValidateCreatePlanRequest(&plan.CreatePlanRequest{
+		LogLevel: &logLevelDebug,
+		CommsConfig: plan.CommsConfigInput{
+			Protocol: "mqtt",
+		},
+		SignaturesFeedConfig: plan.SignaturesFeedConfigInput{
+			Mode: "blocking",
+		},
+	}))
+	assert.NoError(t, plan.ValidateCreatePlanRequest(nil))
+	assert.Error(t, plan.ValidateCreatePlanRequest(&plan.CreatePlanRequest{
+		LogLevel: &logLevelInvalid,
+	}))
+	assert.Error(t, plan.ValidateCreatePlanRequest(&plan.CreatePlanRequest{
+		CommsConfig: plan.CommsConfigInput{
+			Protocol: "INVALID",
+		},
+	}))
+	assert.Error(t, plan.ValidateCreatePlanRequest(&plan.CreatePlanRequest{
+		SignaturesFeedConfig: plan.SignaturesFeedConfigInput{
+			Mode: "INVALID",
+		},
+	}))
+
+	assert.NoError(t, plan.ValidateUpdatePlanRequest(&plan.UpdatePlanRequest{
+		LogLevel: &logLevelDebug,
+		CommsConfig: plan.CommsConfigInput{
+			Protocol: "mqtt",
+		},
+		SignaturesFeedConfig: plan.SignaturesFeedConfigInput{
+			Mode: "reportOnly",
+		},
+	}))
+	assert.NoError(t, plan.ValidateUpdatePlanRequest(nil))
+	assert.Error(t, plan.ValidateUpdatePlanRequest(&plan.UpdatePlanRequest{
+		LogLevel: &logLevelInvalid,
+	}))
+	assert.Error(t, plan.ValidateUpdatePlanRequest(&plan.UpdatePlanRequest{
+		CommsConfig: plan.CommsConfigInput{
+			Protocol: "INVALID",
+		},
+	}))
+	assert.Error(t, plan.ValidateUpdatePlanRequest(&plan.UpdatePlanRequest{
+		SignaturesFeedConfig: plan.SignaturesFeedConfigInput{
+			Mode: "INVALID",
+		},
+	}))
 }

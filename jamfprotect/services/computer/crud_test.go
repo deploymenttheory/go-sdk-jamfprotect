@@ -43,6 +43,27 @@ func TestComputerService_ListComputers(t *testing.T) {
 	assert.Equal(t, testUUID, *result[0].UUID)
 }
 
+func TestComputerService_ListComputers_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listComputers", 200, "list_computers_empty.json")
+
+	result, _, err := service.ListComputers(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestComputerService_GetComputer_NilResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "getComputer", 200, "get_computer_empty.json")
+
+	result, _, err := service.GetComputer(context.Background(), "550e8400-e29b-41d4-a716-446655440000")
+
+	require.NoError(t, err)
+	assert.Nil(t, result)
+}
+
 func TestComputerService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 

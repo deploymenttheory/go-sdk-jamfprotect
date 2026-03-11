@@ -88,6 +88,17 @@ func TestRoleService_ListRoles(t *testing.T) {
 	assert.Equal(t, "Test Role", result[0].Name)
 }
 
+func TestRoleService_ListRoles_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listRoles", 200, "list_roles_empty.json")
+
+	result, _, err := service.ListRoles(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
 func TestRoleService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 

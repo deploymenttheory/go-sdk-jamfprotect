@@ -33,3 +33,24 @@ func TestDownloadsService_GetOrganizationDownloads(t *testing.T) {
 	assert.Equal(t, "ws-auth-token", result.WebsocketAuth)
 	assert.Equal(t, "tamper-profile-content", result.TamperPreventionProfile)
 }
+
+func TestDownloadsService_GetOrganizationDownloads_NilResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "getOrganizationDownloads", 200, "get_organization_downloads_empty.json")
+
+	result, _, err := service.GetOrganizationDownloads(context.Background())
+
+	require.NoError(t, err)
+	assert.Nil(t, result)
+}
+
+func TestDownloadsService_GetOrganizationDownloads_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "getOrganizationDownloads", 500, "", "Internal Server Error")
+
+	result, _, err := service.GetOrganizationDownloads(context.Background())
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to get organization downloads")
+}

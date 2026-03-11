@@ -96,6 +96,27 @@ func TestUserService_ListUsers(t *testing.T) {
 	assert.Equal(t, testUserEmail, result[0].Email)
 }
 
+func TestUserService_ListUsers_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listUsers", 200, "list_users_empty.json")
+
+	result, _, err := service.ListUsers(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestUserService_ListUsers_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "listUsers", 500, "", "Internal Server Error")
+
+	result, _, err := service.ListUsers(context.Background())
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+}
+
 func TestUserService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 

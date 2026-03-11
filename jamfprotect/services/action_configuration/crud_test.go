@@ -100,6 +100,28 @@ func TestActionConfigService_ListActionConfigNames(t *testing.T) {
 	assert.Equal(t, "Test Action Config", result[0])
 }
 
+func TestActionConfigService_ListActionConfigs_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/app", "listActionConfigs", 200, "list_action_configs_empty.json")
+
+	result, _, err := service.ListActionConfigs(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestActionConfigService_ListActionConfigNames_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/app", "listActionConfigNames", 200, "list_action_config_names_empty.json")
+
+	result, _, err := service.ListActionConfigNames(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
 func TestActionConfigService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 
@@ -145,6 +167,45 @@ func TestActionConfigService_ValidationErrors(t *testing.T) {
 			wantErr: "id is required",
 		},
 		{
+			name: "UpdateActionConfig empty id",
+			fn: func() error {
+				_, _, err := service.UpdateActionConfig(context.Background(), "", &actionconfiguration.UpdateActionConfigRequest{
+					Name:        "test",
+					AlertConfig: map[string]any{"type": "alert"},
+				})
+				return err
+			},
+			wantErr: "id is required",
+		},
+		{
+			name: "UpdateActionConfig nil request",
+			fn: func() error {
+				_, _, err := service.UpdateActionConfig(context.Background(), "test-id", nil)
+				return err
+			},
+			wantErr: "request cannot be nil",
+		},
+		{
+			name: "UpdateActionConfig missing name",
+			fn: func() error {
+				_, _, err := service.UpdateActionConfig(context.Background(), "test-id", &actionconfiguration.UpdateActionConfigRequest{
+					AlertConfig: map[string]any{"type": "alert"},
+				})
+				return err
+			},
+			wantErr: "name is required",
+		},
+		{
+			name: "UpdateActionConfig missing alertConfig",
+			fn: func() error {
+				_, _, err := service.UpdateActionConfig(context.Background(), "test-id", &actionconfiguration.UpdateActionConfigRequest{
+					Name: "test",
+				})
+				return err
+			},
+			wantErr: "alertConfig is required",
+		},
+		{
 			name: "DeleteActionConfig empty id",
 			fn: func() error {
 				_, err := service.DeleteActionConfig(context.Background(), "")
@@ -161,4 +222,15 @@ func TestActionConfigService_ValidationErrors(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.wantErr)
 		})
 	}
+}
+
+func TestActionConfigService_Validators(t *testing.T) {
+	assert.NoError(t, actionconfiguration.ValidateActionConfigID("test-id"))
+	assert.NoError(t, actionconfiguration.ValidateActionConfigID(""))
+
+	assert.NoError(t, actionconfiguration.ValidateCreateActionConfigRequest(&actionconfiguration.CreateActionConfigRequest{}))
+	assert.NoError(t, actionconfiguration.ValidateCreateActionConfigRequest(nil))
+
+	assert.NoError(t, actionconfiguration.ValidateUpdateActionConfigRequest(&actionconfiguration.UpdateActionConfigRequest{}))
+	assert.NoError(t, actionconfiguration.ValidateUpdateActionConfigRequest(nil))
 }

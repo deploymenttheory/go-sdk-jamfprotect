@@ -87,6 +87,80 @@ func TestGroupService_ListGroups(t *testing.T) {
 	assert.Equal(t, "Test Group", result[0].Name)
 }
 
+func TestGroupService_ListGroups_EmptyResult(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.Register("/graphql", "listGroups", 200, "list_groups_empty.json")
+
+	result, _, err := service.ListGroups(context.Background())
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+}
+
+func TestGroupService_CreateGroup_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "createGroup", 500, "", "Internal Server Error")
+
+	req := &group.CreateGroupRequest{
+		Name:    "test",
+		RoleIDs: []string{"role-1"},
+	}
+
+	result, _, err := service.CreateGroup(context.Background(), req)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to create group")
+}
+
+func TestGroupService_GetGroup_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "getGroup", 500, "", "Internal Server Error")
+
+	result, _, err := service.GetGroup(context.Background(), "test-id")
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to get group")
+}
+
+func TestGroupService_UpdateGroup_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "updateGroup", 500, "", "Internal Server Error")
+
+	req := &group.UpdateGroupRequest{
+		Name:    "test",
+		RoleIDs: []string{"role-1"},
+	}
+
+	result, _, err := service.UpdateGroup(context.Background(), "test-id", req)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to update group")
+}
+
+func TestGroupService_DeleteGroup_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "deleteGroup", 500, "", "Internal Server Error")
+
+	_, err := service.DeleteGroup(context.Background(), "test-id")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to delete group")
+}
+
+func TestGroupService_ListGroups_Error(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterError("/graphql", "listGroups", 500, "", "Internal Server Error")
+
+	result, _, err := service.ListGroups(context.Background())
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+}
+
 func TestGroupService_ValidationErrors(t *testing.T) {
 	service, _ := setupMockService(t)
 
