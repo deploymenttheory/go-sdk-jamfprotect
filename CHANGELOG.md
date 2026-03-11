@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.0 (2026-03-11)
+
+
+### Features
+
+* add code coverage badge and update service imports in the SDK ([ca0ded7](https://github.com/deploymenttheory/go-sdk-jamfprotect/commit/ca0ded71c4839f45b8f81423c2e8e576f12a4209))
+* remove deprecated interfaces and update transport layer ([51fabee](https://github.com/deploymenttheory/go-sdk-jamfprotect/commit/51fabee1cbd2b4677f1f1715d593d591c2b4b9be))
+
 ## [Unreleased]
 
 ### Added
