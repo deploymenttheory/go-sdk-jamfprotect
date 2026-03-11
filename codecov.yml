@@ -1,0 +1,99 @@
+# Codecov configuration for go-sdk-jamfprotect
+# For more info: https://docs.codecov.io/docs/codecov-yaml
+
+codecov:
+  bot: "codecov-io"
+  require_ci_to_pass: true
+  max_report_age: 24h
+  notify:
+    after_n_builds: 1
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...90"
+
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+        base: auto
+        branches:
+          - main
+        if_ci_failed: error
+        informational: true
+
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+        base: auto
+        branches:
+          - main
+        if_ci_failed: ignore
+        informational: true
+
+# Flags for different test types
+flags:
+  unittests:
+    paths:
+      - "jamfprotect/"
+    carryforward: false
+
+  acceptancetests:
+    paths:
+      - "jamfprotect/acceptance/"
+    carryforward: false
+
+  client:
+    paths:
+      - "jamfprotect/client/"
+    carryforward: false
+
+  services:
+    paths:
+      - "jamfprotect/services/"
+    carryforward: false
+
+# Ignore paths that shouldn't count towards coverage
+ignore:
+  - "tools/"
+  - "tools/**"
+  - "scripts/"
+  - "scripts/**"
+  - "examples/**"
+  - "docs/"
+  - "docs/**"
+  - "**/*_test.go"
+  - "**/testdata/**"
+  - "**/mocks/**"
+  - "**/tests/**"
+  - "**/acceptance/**"
+  - "*.md"
+  - "*.json"
+  - "*.xml"
+  - "*.yml"
+  - "*.yaml"
+  - "go.mod"
+  - "go.sum"
+
+# Parser settings for Go
+parsers:
+  go:
+    partials_as_hits: false
+
+# Pull request comment configuration
+comment:
+  layout: "diff, flags, files"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+  branches:
+    - main
+
+# GitHub Checks annotations
+github_checks:
+  annotations: true

@@ -11,16 +11,21 @@ import (
 	actionconfigs "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/action_configuration"
 	analytics "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic"
 	analyticsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic_set"
-	exceptionsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/exception_set"
+	apiclients "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/api_client"
+	changemanagement "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/change_management"
+	computers "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/computer"
 	preventlists "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/custom_prevent_list"
-	plans "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/plan"
-	telemetryv2 "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/telemetry"
-	usbcontrolsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/removable_storage_control_set"
-	unifiedloggingfilters "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/unified_logging_filter"
+	dataforwarding "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/data_forwarding"
+	dataretention "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/data_retention"
 	downloads "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/downloads"
+	exceptionsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/exception_set"
 	groups "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/group"
 	identityproviders "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/identity_provider"
+	plans "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/plan"
+	usbcontrolsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/removable_storage_control_set"
 	roles "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/role"
+	telemetryv2 "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/telemetry"
+	unifiedloggingfilters "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/unified_logging_filter"
 	users "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/user"
 )
 
@@ -32,20 +37,25 @@ type Client struct {
 	transport *client.Transport
 
 	// Services
-	ActionConfig          *actionconfigs.Service
-	Analytic              *analytics.Service
-	AnalyticSet           *analyticsets.Service
-	ExceptionSet          *exceptionsets.Service
-	PreventList           *preventlists.Service
-	Plan                  *plans.Service
-	TelemetryV2           *telemetryv2.Service
-	USBControlSet         *usbcontrolsets.Service
-	UnifiedLoggingFilter  *unifiedloggingfilters.Service
-	Downloads             *downloads.Service
-	Group                 *groups.Service
-	IdentityProvider      *identityproviders.Service
-	Role                  *roles.Service
-	User                  *users.Service
+	ActionConfig         *actionconfigs.Service
+	Analytic             *analytics.Service
+	AnalyticSet          *analyticsets.Service
+	ApiClient            *apiclients.Service
+	ChangeManagement     *changemanagement.Service
+	Computer             *computers.Service
+	DataForwarding       *dataforwarding.Service
+	DataRetention        *dataretention.Service
+	Downloads            *downloads.Service
+	ExceptionSet         *exceptionsets.Service
+	Group                *groups.Service
+	IdentityProvider     *identityproviders.Service
+	Plan                 *plans.Service
+	PreventList          *preventlists.Service
+	Role                 *roles.Service
+	TelemetryV2          *telemetryv2.Service
+	UnifiedLoggingFilter *unifiedloggingfilters.Service
+	USBControlSet        *usbcontrolsets.Service
+	User                 *users.Service
 }
 
 // NewClient creates a new Jamf Protect API client
@@ -74,16 +84,21 @@ func NewClient(clientID, clientSecret string, options ...client.ClientOption) (*
 		ActionConfig:         actionconfigs.NewService(transport),
 		Analytic:             analytics.NewService(transport),
 		AnalyticSet:          analyticsets.NewService(transport),
-		ExceptionSet:         exceptionsets.NewService(transport),
-		PreventList:          preventlists.NewService(transport),
-		Plan:                 plans.NewService(transport),
-		TelemetryV2:          telemetryv2.NewService(transport),
-		USBControlSet:        usbcontrolsets.NewService(transport),
-		UnifiedLoggingFilter: unifiedloggingfilters.NewService(transport),
+		ApiClient:            apiclients.NewService(transport),
+		ChangeManagement:     changemanagement.NewService(transport),
+		Computer:             computers.NewService(transport),
+		DataForwarding:       dataforwarding.NewService(transport),
+		DataRetention:        dataretention.NewService(transport),
 		Downloads:            downloads.NewService(transport),
+		ExceptionSet:         exceptionsets.NewService(transport),
 		Group:                groups.NewService(transport),
 		IdentityProvider:     identityproviders.NewService(transport),
+		Plan:                 plans.NewService(transport),
+		PreventList:          preventlists.NewService(transport),
 		Role:                 roles.NewService(transport),
+		TelemetryV2:          telemetryv2.NewService(transport),
+		UnifiedLoggingFilter: unifiedloggingfilters.NewService(transport),
+		USBControlSet:        usbcontrolsets.NewService(transport),
 		User:                 users.NewService(transport),
 	}
 

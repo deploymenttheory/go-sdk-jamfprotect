@@ -2,6 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/deploymenttheory/go-api-sdk-jamfprotect.svg)](https://pkg.go.dev/github.com/deploymenttheory/go-api-sdk-jamfprotect)
 [![Go Report Card](https://goreportcard.com/badge/github.com/deploymenttheory/go-api-sdk-jamfprotect)](https://goreportcard.com/report/github.com/deploymenttheory/go-api-sdk-jamfprotect)
+[![codecov](https://codecov.io/gh/deploymenttheory/go-sdk-jamfprotect/graph/badge.svg)](https://codecov.io/gh/deploymenttheory/go-sdk-jamfprotect)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A comprehensive Go SDK for interacting with the Jamf Protect GraphQL API. This SDK provides a type-safe, idiomatic Go interface for managing Jamf Protect resources including plans, analytics, action configurations, and more.
