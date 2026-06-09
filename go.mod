@@ -8,7 +8,7 @@ require (
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/trace v1.42.0
 	go.uber.org/zap v1.27.1
-	resty.dev/v3 v3.0.0-beta.6
+	resty.dev/v3 v3.0.0-rc.1
 )
 
 require (
