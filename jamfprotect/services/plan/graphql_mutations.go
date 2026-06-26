@@ -105,3 +105,30 @@ func planMutationVariables(req any) map[string]any {
 
 	return vars
 }
+
+func planConfigProfileOptionsVariables(input *PlanConfigProfileOptionsInput) map[string]any {
+	if input == nil {
+		return nil
+	}
+
+	vars := map[string]any{
+		"pppc":    input.PPPC,
+		"token":   input.Token,
+		"tokenOptions": map[string]any{
+			"xpc":               input.TokenOptions.XPC,
+			"keychain_client_id": input.TokenOptions.KeychainClientID,
+		},
+		"ca":                input.CA,
+		"csr":               input.CSR,
+		"websocket":         input.Websocket,
+		"sign":              input.Sign,
+		"systemExtension":   input.SystemExtension,
+		"serviceManagement": input.ServiceManagement,
+	}
+
+	if input.ConfigVersion != nil {
+		vars["configVersion"] = *input.ConfigVersion
+	}
+
+	return vars
+}

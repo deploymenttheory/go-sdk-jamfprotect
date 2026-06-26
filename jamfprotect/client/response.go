@@ -44,7 +44,7 @@ func (t *Transport) validateResponse(resp *resty.Response, method, path string) 
 			zap.Int("status_code", resp.StatusCode()))
 		return nil
 	}
-	if !resp.IsError() && bodyLen > 0 {
+	if resp.IsStatusSuccess() && bodyLen > 0 {
 		contentType := resp.Header().Get("Content-Type")
 		if contentType != "" && !strings.HasPrefix(contentType, "application/json") {
 			t.logger.Warn("Unexpected Content-Type in response",

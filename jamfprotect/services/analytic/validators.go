@@ -93,6 +93,19 @@ func ValidateUpdateAnalyticRequest(req *UpdateAnalyticRequest) error {
 	return nil
 }
 
+// ValidateUpdateInternalAnalyticRequest validates tenant-scoped update request fields.
+func ValidateUpdateInternalAnalyticRequest(req *UpdateInternalAnalyticRequest) error {
+	if req == nil {
+		return nil
+	}
+	if req.TenantSeverity != "" {
+		if err := ValidateSeverity(req.TenantSeverity); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ValidateAnalyticID checks that uuid is non-empty and matches UUID format.
 func ValidateAnalyticID(uuid string) error {
 	if uuid == "" {

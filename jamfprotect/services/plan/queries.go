@@ -240,7 +240,7 @@ query getPlanConfigurationAndSetOptions(
 			types
 		}
 	}
-	managedAnalyticSets: listAnalyticSets(
+		managedAnalyticSets: listAnalyticSets(
 		input: {
 			order: { direction: DESC, field: created }
 			filter: { managed: { equals: true } }
@@ -254,5 +254,11 @@ query getPlanConfigurationAndSetOptions(
 			types
 		}
 	}
+}
+`
+
+const getPlansConfigProfileQuery = `
+query getPlansConfigProfile($id: ID!, $input: ProfileOptionsInput) {
+	getPlansConfigProfile(id: $id, input: $input)
 }
 `

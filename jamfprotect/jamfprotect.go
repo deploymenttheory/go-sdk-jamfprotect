@@ -12,6 +12,7 @@ import (
 	analytics "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic"
 	analyticsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic_set"
 	apiclients "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/api_client"
+	beta "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/beta"
 	changemanagement "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/change_management"
 	computers "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/computer"
 	preventlists "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/custom_prevent_list"
@@ -41,6 +42,7 @@ type Client struct {
 	Analytic             *analytics.Service
 	AnalyticSet          *analyticsets.Service
 	ApiClient            *apiclients.Service
+	Beta                 *beta.Service
 	ChangeManagement     *changemanagement.Service
 	Computer             *computers.Service
 	DataForwarding       *dataforwarding.Service
@@ -85,6 +87,7 @@ func NewClient(clientID, clientSecret string, options ...client.ClientOption) (*
 		Analytic:             analytics.NewService(transport),
 		AnalyticSet:          analyticsets.NewService(transport),
 		ApiClient:            apiclients.NewService(transport),
+		Beta:                 beta.NewService(transport),
 		ChangeManagement:     changemanagement.NewService(transport),
 		Computer:             computers.NewService(transport),
 		DataForwarding:       dataforwarding.NewService(transport),

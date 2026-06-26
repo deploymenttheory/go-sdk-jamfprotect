@@ -71,6 +71,25 @@ func TestAnalyticService_UpdateAnalytic(t *testing.T) {
 	assert.Equal(t, "Updated Analytic", result.Name)
 }
 
+func TestAnalyticService_UpdateInternalAnalytic(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterUpdateInternalAnalyticMock()
+
+	req := &analytic.UpdateInternalAnalyticRequest{
+		TenantSeverity: "High",
+		TenantActions: []analytic.AnalyticActionInput{
+			{Name: "notify", Parameters: []string{}},
+		},
+	}
+
+	result, _, err := service.UpdateInternalAnalytic(context.Background(), testUUID, req)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, testUUID, result.UUID)
+	assert.Equal(t, "High", result.TenantSeverity)
+}
+
 func TestAnalyticService_DeleteAnalytic(t *testing.T) {
 	service, mock := setupMockService(t)
 	mock.RegisterDeleteAnalyticMock()
