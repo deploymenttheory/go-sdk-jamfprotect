@@ -103,6 +103,36 @@ func (s *Service) UpdateAnalytic(ctx context.Context, uuid string, req *UpdateAn
 	return result.UpdateAnalytic, resp, nil
 }
 
+// UpdateInternalAnalytic updates tenant-scoped fields on a managed analytic.
+func (s *Service) UpdateInternalAnalytic(ctx context.Context, uuid string, req *UpdateInternalAnalyticRequest) (*Analytic, *resty.Response, error) {
+	if err := ValidateAnalyticID(uuid); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
+	}
+	if req == nil {
+		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
+	}
+	if err := ValidateUpdateInternalAnalyticRequest(req); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
+	}
+
+	vars := internalAnalyticMutationVariables(req)
+	vars["uuid"] = uuid
+	var result struct {
+		UpdateInternalAnalytic *Analytic `json:"updateInternalAnalytic"`
+	}
+
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(updateInternalAnalyticMutation).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
+	if err != nil {
+		return nil, resp, fmt.Errorf("failed to update internal analytic: %w", err)
+	}
+
+	return result.UpdateInternalAnalytic, resp, nil
+}
+
 // DeleteAnalytic deletes an analytic by UUID
 func (s *Service) DeleteAnalytic(ctx context.Context, uuid string) (*resty.Response, error) {
 	if err := ValidateAnalyticID(uuid); err != nil {

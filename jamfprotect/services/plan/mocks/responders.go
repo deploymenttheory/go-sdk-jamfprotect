@@ -30,6 +30,7 @@ func (m *PlanMock) RegisterMocks() {
 	m.RegisterListPlansMock()
 	m.RegisterListPlanNamesMock()
 	m.RegisterGetPlanConfigurationAndSetOptionsMock()
+	m.RegisterGetPlansConfigProfileMock()
 }
 
 // RegisterErrorMocks registers error response mocks.
@@ -71,6 +72,11 @@ func (m *PlanMock) RegisterListPlanNamesMock() {
 // RegisterGetPlanConfigurationAndSetOptionsMock registers a success mock for getPlanConfigurationAndSetOptions.
 func (m *PlanMock) RegisterGetPlanConfigurationAndSetOptionsMock() {
 	m.Register(client.EndpointApp, "getPlanConfigurationAndSetOptions", 200, "get_plan_configuration_and_set_options_success.json")
+}
+
+// RegisterGetPlansConfigProfileMock registers a success mock for getPlansConfigProfile.
+func (m *PlanMock) RegisterGetPlansConfigProfileMock() {
+	m.Register(client.EndpointApp, "getPlansConfigProfile", 200, "get_plans_config_profile_success.json")
 }
 
 // RegisterNotFoundErrorMock registers a not-found error mock.

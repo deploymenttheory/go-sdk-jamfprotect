@@ -89,3 +89,27 @@ func analyticMutationVariables(req any, isUpdate bool) map[string]any {
 
 	return vars
 }
+
+func internalAnalyticMutationVariables(req *UpdateInternalAnalyticRequest) map[string]any {
+	vars := map[string]any{}
+	if req == nil {
+		return vars
+	}
+
+	if req.TenantActions != nil {
+		tenantActionsVars := make([]map[string]any, 0, len(req.TenantActions))
+		for _, action := range req.TenantActions {
+			tenantActionsVars = append(tenantActionsVars, map[string]any{
+				"name":       action.Name,
+				"parameters": action.Parameters,
+			})
+		}
+		vars["tenantActions"] = tenantActionsVars
+	}
+
+	if req.TenantSeverity != "" {
+		vars["tenantSeverity"] = req.TenantSeverity
+	}
+
+	return vars
+}

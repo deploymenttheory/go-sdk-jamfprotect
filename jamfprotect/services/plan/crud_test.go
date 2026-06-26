@@ -127,6 +127,27 @@ func TestPlanService_GetPlanConfigurationAndSetOptions(t *testing.T) {
 	assert.Equal(t, "mas-uuid-1", result.ManagedAnalyticSets[0].UUID)
 }
 
+func TestPlanService_GetPlansConfigProfile(t *testing.T) {
+	service, mock := setupMockService(t)
+	mock.RegisterGetPlansConfigProfileMock()
+
+	options := &plan.PlanConfigProfileOptionsInput{
+		Sign:            true,
+		PPPC:            true,
+		SystemExtension: true,
+		ServiceManagement: true,
+		Websocket:       true,
+		CA:              true,
+		CSR:             true,
+		Token:           true,
+	}
+
+	profile, _, err := service.GetPlansConfigProfile(context.Background(), "test-id-1234", options)
+
+	require.NoError(t, err)
+	assert.Equal(t, "base64-encoded-profile-payload", profile)
+}
+
 func TestPlanService_ListPlans_EmptyResult(t *testing.T) {
 	service, mock := setupMockService(t)
 	mock.Register("/app", "listPlans", 200, "list_plans_empty.json")

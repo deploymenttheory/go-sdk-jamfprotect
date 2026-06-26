@@ -194,3 +194,23 @@ type PlanConfigurationAndSetOptions struct {
 	AnalyticSets        []PlanConfigAnalyticSetItem  `json:"analyticSets"`
 	ManagedAnalyticSets []PlanConfigAnalyticSetItem  `json:"managedAnalyticSets"`
 }
+
+// PlanConfigProfileOptionsInput controls which payloads are included in a plan configuration profile.
+type PlanConfigProfileOptionsInput struct {
+	PPPC              bool
+	Token             bool
+	TokenOptions      PlanConfigProfileTokenOptionsInput
+	CA                bool
+	CSR               bool
+	Websocket         bool
+	Sign              bool
+	SystemExtension   bool
+	ServiceManagement bool
+	ConfigVersion     *int64
+}
+
+// PlanConfigProfileTokenOptionsInput controls bootstrap token payload options.
+type PlanConfigProfileTokenOptionsInput struct {
+	XPC              bool
+	KeychainClientID bool
+}

@@ -26,6 +26,7 @@ func (m *AnalyticMock) RegisterMocks() {
 	m.RegisterCreateAnalyticMock()
 	m.RegisterGetAnalyticMock()
 	m.RegisterUpdateAnalyticMock()
+	m.RegisterUpdateInternalAnalyticMock()
 	m.RegisterDeleteAnalyticMock()
 	m.RegisterListAnalyticsMock()
 	m.RegisterListAnalyticsLiteMock()
@@ -54,6 +55,11 @@ func (m *AnalyticMock) RegisterGetAnalyticMock() {
 // RegisterUpdateAnalyticMock registers a success mock for updateAnalytic.
 func (m *AnalyticMock) RegisterUpdateAnalyticMock() {
 	m.Register(client.EndpointApp, "updateAnalytic", 200, "update_analytic_success.json")
+}
+
+// RegisterUpdateInternalAnalyticMock registers a success mock for updateInternalAnalytic.
+func (m *AnalyticMock) RegisterUpdateInternalAnalyticMock() {
+	m.Register(client.EndpointApp, "updateInternalAnalytic", 200, "update_internal_analytic_success.json")
 }
 
 // RegisterDeleteAnalyticMock registers a success mock for deleteAnalytic.

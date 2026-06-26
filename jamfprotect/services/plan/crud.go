@@ -279,3 +279,30 @@ func (s *Service) GetPlanConfigurationAndSetOptions(ctx context.Context, req *Ge
 
 	return opts, resp, nil
 }
+
+// GetPlansConfigProfile retrieves a configuration profile payload for a plan.
+func (s *Service) GetPlansConfigProfile(ctx context.Context, id string, options *PlanConfigProfileOptionsInput) (string, *resty.Response, error) {
+	if id == "" {
+		return "", nil, fmt.Errorf("%w: id is required", client.ErrInvalidInput)
+	}
+
+	vars := map[string]any{"id": id}
+	if options != nil {
+		vars["input"] = planConfigProfileOptionsVariables(options)
+	}
+
+	var result struct {
+		GetPlansConfigProfile string `json:"getPlansConfigProfile"`
+	}
+
+	resp, err := s.client.NewRequest(ctx).
+		SetQuery(getPlansConfigProfileQuery).
+		SetVariables(vars).
+		SetTarget(&result).
+		Post(client.EndpointApp)
+	if err != nil {
+		return "", resp, fmt.Errorf("failed to get plans config profile: %w", err)
+	}
+
+	return result.GetPlansConfigProfile, resp, nil
+}

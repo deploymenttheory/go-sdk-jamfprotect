@@ -115,6 +115,21 @@ mutation updateAnalytic(
 }
 ` + analyticFields
 
+const updateInternalAnalyticMutation = `
+mutation updateInternalAnalytic(
+	$uuid: ID!,
+	$tenantActions: [AnalyticActionsInput],
+	$tenantSeverity: SEVERITY
+) {
+	updateInternalAnalytic(
+		uuid: $uuid,
+		input: {tenantActions: $tenantActions, tenantSeverity: $tenantSeverity}
+	) {
+		...AnalyticFields
+	}
+}
+` + analyticFields
+
 const deleteAnalyticMutation = `
 mutation deleteAnalytic($uuid: ID!) {
 	deleteAnalytic(uuid: $uuid) {

@@ -54,6 +54,12 @@ type CreateAnalyticRequest struct {
 	SnapshotFiles   []string
 }
 
+// UpdateInternalAnalyticRequest is the request payload for updating tenant-scoped fields on a managed analytic.
+type UpdateInternalAnalyticRequest struct {
+	TenantActions  []AnalyticActionInput
+	TenantSeverity string
+}
+
 // UpdateAnalyticRequest is the request payload for updating an analytic
 type UpdateAnalyticRequest struct {
 	Name            string
