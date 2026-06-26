@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/deploymenttheory/go-sdk-jamfprotect/compare/v1.0.1...v1.1.0) (2026-06-26)
+
+
+### Features
+
+* Added Beta service and Internal Analytic update functionality ([9b74819](https://github.com/deploymenttheory/go-sdk-jamfprotect/commit/9b7481964c7b15f024d536557e83591107ea0bb1))
+* Added Beta service and Internal Analytic update functionality ([afa12c9](https://github.com/deploymenttheory/go-sdk-jamfprotect/commit/afa12c97f3e80ef1d982ae2541e6524d838d1d0a))
+
 ## [1.0.1](https://github.com/deploymenttheory/go-sdk-jamfprotect/compare/v1.0.0...v1.0.1) (2026-03-11)
 
 
